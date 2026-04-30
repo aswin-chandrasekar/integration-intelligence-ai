@@ -30,18 +30,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<'dashboard' | 'insights'>('dashboard');
 
+  const fetchIntegrations = async () => {
+    try {
+      const data = await getIntegrations();
+      setIntegrations(data);
+    } catch (error) {
+      console.error('Failed to fetch integrations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getIntegrations();
-        setIntegrations(data);
-      } catch (error) {
-        console.error('Failed to fetch integrations:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+    fetchIntegrations();
   }, []);
 
   return (
@@ -76,7 +77,7 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <ScanPanel />
+                    <ScanPanel onScanComplete={fetchIntegrations} />
                   </motion.div>
                 </div>
 

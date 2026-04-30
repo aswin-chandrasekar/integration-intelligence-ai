@@ -2,7 +2,7 @@ import ast
  
 def extract_flask_routes(file_path):
     routes = []
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         tree = ast.parse(f.read())
  
     for node in ast.walk(tree):

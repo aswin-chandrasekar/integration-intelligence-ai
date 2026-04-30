@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Play, Search, Loader2 } from 'lucide-react';
 import { scanRepository, getScanStatus } from '../services/api';
 
-const ScanPanel: React.FC = () => {
+interface ScanPanelProps {
+  onScanComplete?: () => void;
+}
+
+const ScanPanel: React.FC<ScanPanelProps> = ({ onScanComplete }) => {
   const [repoPath, setRepoPath] = useState('');
   const [status, setStatus] = useState('Idle');
   const [loading, setLoading] = useState(false);
@@ -29,11 +33,14 @@ const ScanPanel: React.FC = () => {
         setStatus(res.status);
         if (res.status === 'Completed') {
           clearInterval(interval);
+          if (onScanComplete) {
+            onScanComplete();
+          }
         }
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [status]);
+  }, [status, onScanComplete]);
 
   const getStatusColor = () => {
     switch (status) {

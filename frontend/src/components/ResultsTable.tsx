@@ -61,8 +61,8 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
                 <td className="px-6 py-4 text-xs font-mono text-stone-600">{item.evidence}</td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-white font-medium">{item.confidence}</span>
-                    {item.confidence.includes('98') ? (
+                    <span className="text-sm text-white font-medium">{item.confidence || 'N/A'}</span>
+                    {item.confidence?.includes('98') ? (
                       <Verified className="text-emerald-500 w-4 h-4 fill-emerald-950/20" />
                     ) : (
                       <Info className="text-stone-700 w-4 h-4" />
@@ -76,7 +76,8 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
       </div>
 
       <div className="p-4 bg-[#0c0a09] flex justify-between items-center px-6 border-t border-stone-800">
-        <p className="text-[10px] font-black text-stone-600 uppercase tracking-widest">Showing {data.length} of 28 discovered integrations</p>
+        <p className="text-[10px] font-black text-stone-600 uppercase tracking-widest">Showing {data.length} discovered integrations</p>
+
         <div className="flex gap-2">
           <button className="p-1.5 border border-stone-800 rounded hover:bg-stone-900 transition-colors">
             <ChevronLeft className="w-4 h-4 text-stone-500" />

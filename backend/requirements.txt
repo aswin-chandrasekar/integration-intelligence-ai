@@ -1,4 +1,3 @@
 flask
-ast
 requests
 python-dotenv

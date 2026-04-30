@@ -12,50 +12,7 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Mock database for demo purposes
   let scanStatus = "Idle";
-  const mockIntegrations = [
-    {
-      id: "1",
-      source: "Stripe API",
-      target: "Checkout Service",
-      type: "REST",
-      evidence: "src/services/pay.js:42",
-      confidence: "98% Match",
-      note: "High match",
-      color: "blue"
-    },
-    {
-      id: "2",
-      source: "PostgreSQL",
-      target: "User DB Cluster",
-      type: "SQL",
-      evidence: "lib/db/client.ts:112",
-      confidence: "Internal",
-      note: "Internal Connection",
-      color: "purple"
-    },
-    {
-      id: "3",
-      source: "Kafka",
-      target: "Audit-Logging",
-      type: "Pub/Sub",
-      evidence: "handlers/events.go:88",
-      confidence: "Detected",
-      note: "Producer detected",
-      color: "orange"
-    },
-    {
-      id: "4",
-      source: "Twilio SDK",
-      target: "SMS Gateway",
-      type: "SDK",
-      evidence: "utils/notify.py:15",
-      confidence: "82%",
-      note: "Medium confidence",
-      color: "cyan"
-    }
-  ];
 
   // API Routes
   app.post("/api/scan", (req, res) => {
@@ -65,22 +22,43 @@ async function startServer() {
     }
     
     scanStatus = "Scanning";
-    
-    // Simulate a scan process
-    setTimeout(() => {
-      scanStatus = "Completed";
-    }, 5000);
-
     res.json({ status: "Scanning", message: "Scan initiated successfully" });
+
+    // Forward request to actual Flask backend in the background
+    // We map camelCase 'repoPath' to snake_case 'repo_path' which Flask expects
+    fetch("http://127.0.0.1:5000/api/scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ repo_path: repoPath })
+    }).then(async (response) => {
+      if (response.ok) {
+        scanStatus = "Completed";
+      } else {
+        scanStatus = "Error";
+        console.error("Backend scan failed with status:", response.status);
+      }
+    }).catch((err) => {
+      scanStatus = "Error";
+      console.error("Failed to connect to backend:", err);
+    });
   });
 
   app.get("/api/status", (req, res) => {
     res.json({ status: scanStatus });
   });
 
-  app.get("/api/edges", (req, res) => {
-    // Return mock data
-    res.json(mockIntegrations);
+  app.get("/api/edges", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/edges");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (e) {
+      console.error("Error fetching edges from backend:", e);
+      res.status(500).json({ error: "Could not fetch edges from backend" });
+    }
   });
 
   // Vite middleware for development
