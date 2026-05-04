@@ -1,150 +1,20 @@
 [
   {
-    "id": "65b4ed40-6ad3-4ad7-8931-c7378695423c",
+    "id": "499cf795-ebb2-4fc1-873f-5f870063867f",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:22",
+    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\backend\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:10",
     "confidence": "95% (Automated Match)",
     "note": "Detected via static code analysis",
     "color": "blue"
   },
   {
-    "id": "b200fcca-a28f-41eb-811b-562fde42d1c9",
+    "id": "7b4903b0-94d9-4ef4-897a-895250166355",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:31",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "03f10e48-3160-42ab-9cfd-50b1aadf3629",
-    "source": "External Client",
-    "target": "Flask App",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:44",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "1a5ea1ef-c704-4d2d-9a60-0950ff936206",
-    "source": "External Client",
-    "target": "Flask App",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:57",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "cf1902e9-8364-467d-b5cb-cacc28c62853",
-    "source": "External Client",
-    "target": "Flask App",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:70",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "759915fe-769e-4927-8ae0-0b17557ff1a3",
-    "source": "External Client",
-    "target": "Flask App",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\main.py:79",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "7a409209-d434-415c-bea1-a960dc7d22fb",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\choices.py:30",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "91ed03b3-326d-4739-95dd-17da558b271d",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\choices.py:34",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "70d2843c-6e63-427c-9005-61355404e7ca",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\client.py:20",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "d3c3295c-9b0a-4643-891a-1a5024f0c99c",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\client.py:27",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "46cabd1a-7612-469b-be21-af35cebc0399",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\client.py:34",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "7b71445f-07a2-4d5c-8383-76be703d1be5",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\client.py:45",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "cc7ba186-7e15-4a54-8ae9-4950eacbd537",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\backend\\services\\servicenow\\client.py:62",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "c13b5333-059b-48b6-866d-f9d6c43b74cf",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\scratch\\test_snow.py:21",
-    "confidence": "95% (Automated Match)",
-    "note": "Detected via static code analysis",
-    "color": "blue"
-  },
-  {
-    "id": "c9c1574b-2686-4b3d-8b55-5cc975715896",
-    "source": "Flask App",
-    "target": "External Service",
-    "type": "SYNC_API",
-    "evidence": "C:\\Users\\aswin.chandrasekar\\Desktop\\integration-intelligence-ai\\backend\\data\\clones\\it-incident-tracker\\scratch\\test_snow.py:33",
+    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\backend\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:51",
     "confidence": "95% (Automated Match)",
     "note": "Detected via static code analysis",
     "color": "blue"
