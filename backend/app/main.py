@@ -1,5 +1,5 @@
 from flask import Flask
-from app.api import api
+from backend.app.api import api
 
 app = Flask(__name__)
 app.register_blueprint(api)

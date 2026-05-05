@@ -11,6 +11,7 @@ import ScanPanel from './components/ScanPanel';
 import ResultsTable from './components/ResultsTable';
 import AIInsights from './components/AIInsights';
 import { getIntegrations, Integration } from './services/api';
+import GraphView from "./components/GraphView.tsx";
 
 export const runScan = async (repoPath: string) => {
   await fetch("/api/scan", {
@@ -51,6 +52,7 @@ export default function App() {
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       
       <main className="lg:ml-72 p-8 min-h-[calc(100vh-64px)] overflow-y-auto">
+        {/* <p style={{ color: "red" }}>CURRENT VIEW: {currentView}</p> */}
         <div className="max-w-7xl mx-auto">
           
           {currentView === 'dashboard' ? (
@@ -71,7 +73,7 @@ export default function App() {
               <div className="grid grid-cols-12 gap-8">
                 
                 {/* 1. Repository Scan Section */}
-                <div className="col-span-12 lg:col-span-7">
+                <div className="col-span-12">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -82,7 +84,7 @@ export default function App() {
                 </div>
 
                 {/* 3. Graph View Section Placeholder */}
-                <div className="col-span-12 lg:col-span-5 h-full">
+                <div className="col-span-12 h-full">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -99,12 +101,9 @@ export default function App() {
                       </p>
                     </div>
 
-                    <div className="mt-8 flex-1 w-full flex items-center justify-center border-2 border-dashed border-stone-800 rounded-xl bg-stone-900 group-hover:bg-amber-900/10 transition-all">
-                      <div className="text-center">
-                        <Activity className="w-12 h-12 text-stone-800 mx-auto mb-3" />
-                        <p className="text-sm text-white font-bold">Dependency Graph</p>
-                        <p className="text-xs text-stone-500 font-medium italic mt-1">Coming Soon</p>
-                      </div>
+                    <div className="mt-8 flex-1 w-full border border-stone-800 rounded-xl bg-stone-900 overflow-hidden">
+                      {/* <p style={{ color: "white" }}>TEST GRAPH</p> */}
+                      <GraphView data={integrations} />
                     </div>
                   </motion.div>
                 </div>

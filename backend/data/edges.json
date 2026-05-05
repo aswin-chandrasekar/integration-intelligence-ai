@@ -1,20 +1,20 @@
 [
   {
-    "id": "499cf795-ebb2-4fc1-873f-5f870063867f",
+    "id": "947ee8a5-2453-4dff-984a-f1913ee67511",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
-    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\backend\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:10",
+    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:10",
     "confidence": "95% (Automated Match)",
     "note": "Detected via static code analysis",
     "color": "blue"
   },
   {
-    "id": "7b4903b0-94d9-4ef4-897a-895250166355",
+    "id": "12fef433-1ce9-413b-8fdb-d204bfa17f52",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
-    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\backend\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:51",
+    "evidence": "C:\\Users\\kaavviyav.ra\\Downloads\\integration-intelligence-ai\\data\\clones\\integration-intelligence-ai\\backend\\app\\api.py:67",
     "confidence": "95% (Automated Match)",
     "note": "Detected via static code analysis",
     "color": "blue"

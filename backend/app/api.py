@@ -1,9 +1,10 @@
 from flask import Blueprint, request, jsonify
-from app.scanner.repo_scanner import get_python_files
-from app.scanner.flask_parser import extract_flask_routes
-from app.scanner.outbound_http import extract_http_calls
-from app.models.edge import make_edge
+from backend.app.scanner.repo_scanner import get_python_files
+from backend.app.scanner.flask_parser import extract_flask_routes
+from backend.app.scanner.outbound_http import extract_http_calls
+from backend.app.models.edge import make_edge
 import json
+from backend.impact.impact_analysis import get_downstream, get_upstream
 
 api = Blueprint('api', __name__)
 
@@ -59,12 +60,31 @@ def scan():
                 c["line"]
             ))
 
-    with open("data/edges.json", "w") as f:
+    with open("backend/data/edges.json", "w") as f:
         json.dump(edges, f, indent=2)
 
     return jsonify({"status": "completed", "edges": len(edges)})
 
 @api.route("/api/edges", methods=["GET"])
 def edges():
-    with open("data/edges.json") as f:
+    import os
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    with open(file_path) as f:
         return jsonify(json.load(f))
+
+@api.route("/api/impact/<system_name>", methods=["GET"])
+def impact(system_name):
+    depth = int(request.args.get("depth", 1))
+
+    downstream = get_downstream(system_name, depth)
+    upstream = get_upstream(system_name, depth)
+
+    return jsonify({
+        "system": system_name,
+        "depth": depth,
+        "downstream": downstream,
+        "upstream": upstream
+    })

@@ -27,3 +27,12 @@ export const getIntegrations = async (): Promise<Integration[]> => {
   const response = await fetch('/api/edges');
   return response.json();
 };
+
+import axios from "axios";
+
+const BASE_URL = "http://127.0.0.1:5000/api";
+
+export const getEdges = async () => {
+  const res = await axios.get(`${BASE_URL}/edges`);
+  return res.data;
+};
