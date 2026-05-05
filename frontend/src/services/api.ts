@@ -4,6 +4,8 @@ export interface Integration {
   target: string;
   type: string;
   evidence: string;
+  file?: string;
+  line?: number;
   confidence: string;
   note: string;
   color: string;

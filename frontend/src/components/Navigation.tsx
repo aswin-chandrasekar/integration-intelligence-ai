@@ -56,9 +56,10 @@ export const TopNav: React.FC = () => {
 interface SidebarProps {
   currentView: 'dashboard' | 'insights';
   onViewChange: (view: 'dashboard' | 'insights') => void;
+  onSectionClick: (id: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange, onSectionClick }) => {
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] py-6 bg-[#0c0a09] w-72 border-r border-stone-800">
       <div className="px-8 mb-10">
@@ -78,11 +79,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onViewChange }) =
           icon={<LayoutDashboard />} 
           label="Dashboard" 
           active={currentView === 'dashboard'} 
-          onClick={() => onViewChange('dashboard')}
+          onClick={() => onSectionClick('scan-section')}
         />
-        <NavItem icon={<Scan />} label="Repository Scan" />
-        <NavItem icon={<Network />} label="Graph View" />
-        <NavItem icon={<Database />} label="Integration Catalog" />
+        <NavItem icon={<Network />} label="Graph View" onClick={() => onSectionClick('graph-section')} />
+        <NavItem icon={<Database />} label="Integration Catalog" onClick={() => onSectionClick('catalog-section')} />
         <NavItem 
           icon={<BrainCircuit />} 
           label="AI Insights" 
