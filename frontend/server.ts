@@ -61,6 +61,42 @@ async function startServer() {
     }
   });
 
+  app.get("/api/impact", async (req, res) => {
+    try {
+      const node = req.query.node;
+      const depth = req.query.depth || 1;
+      const response = await fetch(`http://127.0.0.1:5000/api/impact?node=${node}&depth=${depth}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching impact from backend:", e);
+      res.status(500).json({ error: "Could not fetch impact from backend" });
+    }
+  });
+
+  app.get("/api/impact/:system_name", async (req, res) => {
+    try {
+      const depth = req.query.depth || 1;
+      const response = await fetch(`http://127.0.0.1:5000/api/impact/${req.params.system_name}?depth=${depth}`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching system impact from backend:", e);
+      res.status(500).json({ error: "Could not fetch system impact from backend" });
+    }
+  });
+
+  app.get("/api/insights", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/insights");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching insights from backend:", e);
+      res.status(500).json({ error: "Could not fetch insights from backend" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

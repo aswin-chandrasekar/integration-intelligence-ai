@@ -13,6 +13,7 @@ def extract_http_calls(file_path):
                 calls.append({
                     "type": "OUTBOUND_HTTP",
                     "file": file_path,
-                    "line": node.lineno
+                    "line": node.lineno,
+                    "confidence": "95% (AST HTTP Call)"
                 })
     return calls

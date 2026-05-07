@@ -37,30 +37,8 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
     }
   };
 
-  const getNodesByDepth = (start: string, depth: number, adjacency: Map<string, Set<string>>) => {
-    const visited = new Set<string>([start]);
-    let currentLevel = new Set<string>([start]);
-
-    for (let d = 0; d < depth; d++) {
-      const nextLevel = new Set<string>();
-      currentLevel.forEach((node) => {
-        const neighbors = adjacency.get(node);
-        if (neighbors) {
-          neighbors.forEach((n) => {
-            if (!visited.has(n)) {
-              nextLevel.add(n);
-              visited.add(n);
-            }
-          });
-        }
-      });
-      currentLevel = nextLevel;
-    }
-    return visited;
-  };
-
   const updateGraph = useCallback(
-    (integrations: Integration[]) => {
+    async (integrations: Integration[]) => {
       if (!integrations || integrations.length === 0) {
         setNodes([]);
         setEdges([]);
@@ -68,24 +46,31 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
       }
 
       const nodesMap = new Map<string, Node>();
-      const flowEdges: Edge[] = [];
-      const adjacency = new Map<string, Set<string>>();
+      const groupedEdges = new Map<string, {
+        source: string;
+        target: string;
+        sourceName: string;
+        targetName: string;
+        types: Set<string>;
+        items: Integration[];
+      }>();
 
-      integrations.forEach((item, index) => {
+      const getPos = (id: string) => {
+        if (!nodePositions.current.has(id)) {
+          nodePositions.current.set(id, {
+            x: Math.random() * 800,
+            y: Math.random() * 500,
+          });
+        }
+        return nodePositions.current.get(id)!;
+      };
+
+      integrations.forEach((item) => {
         const sourceId = item.source.toLowerCase().replace(/\s+/g, "-");
         const targetId = item.target.toLowerCase().replace(/\s+/g, "-");
+        const edgeKey = `${sourceId}_${targetId}`;
 
-        // Helper to get or create stable position
-        const getPos = (id: string) => {
-          if (!nodePositions.current.has(id)) {
-            nodePositions.current.set(id, {
-              x: Math.random() * 800,
-              y: Math.random() * 500,
-            });
-          }
-          return nodePositions.current.get(id)!;
-        };
-
+        // 1. Manage Nodes
         if (!nodesMap.has(sourceId)) {
           nodesMap.set(sourceId, {
             id: sourceId,
@@ -102,7 +87,6 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
             },
           });
         }
-
         if (!nodesMap.has(targetId)) {
           nodesMap.set(targetId, {
             id: targetId,
@@ -112,7 +96,7 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
               background: "#0c0a09",
               color: "#d97706",
               borderRadius: "8px",
-              border: `2px solid ${getEdgeColor(item.type)}`,
+              border: `2px solid #d97706`,
               fontWeight: "bold",
               fontSize: "12px",
               width: 150,
@@ -120,28 +104,53 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
           });
         }
 
-        const color = getEdgeColor(item.type);
-        flowEdges.push({
-          id: `e-${sourceId}-${targetId}-${index}`,
-          source: sourceId,
-          target: targetId,
-          label: item.type,
-          animated: true,
-          style: { stroke: color, strokeWidth: 2 },
-          labelStyle: { fill: color, fontWeight: 700, fontSize: 10 },
-          data: { type: item.type, file: item.file, line: item.line },
-        });
+        // 2. Group Edges
+        if (!groupedEdges.has(edgeKey)) {
+          groupedEdges.set(edgeKey, {
+            source: sourceId,
+            target: targetId,
+            sourceName: item.source,
+            targetName: item.target,
+            types: new Set(),
+            items: []
+          });
+        }
+        const group = groupedEdges.get(edgeKey)!;
+        group.types.add(item.type || "UNKNOWN");
+        group.items.push(item);
+      });
 
-        // Build Adjacency
-        if (!adjacency.has(sourceId)) adjacency.set(sourceId, new Set());
-        adjacency.get(sourceId)!.add(targetId);
-        if (!adjacency.has(targetId)) adjacency.set(targetId, new Set());
-        adjacency.get(targetId)!.add(sourceId);
+      const flowEdges: Edge[] = Array.from(groupedEdges.values()).map((group, idx) => {
+        const typeList = Array.from(group.types);
+        const mainType = typeList[0];
+        const color = getEdgeColor(mainType);
+        const count = group.items.length;
+
+        return {
+          id: `e-${group.source}-${group.target}`,
+          source: group.source,
+          target: group.target,
+          label: count > 1 ? `${mainType} (+${count - 1})` : mainType,
+          animated: true,
+          style: { stroke: color, strokeWidth: 2 + Math.min(count, 5) }, // Thicker for more integrations
+          labelStyle: { fill: color, fontWeight: 700, fontSize: 10 },
+          data: {
+            type: typeList.join(", "),
+            integrations: group.items
+          },
+        };
       });
 
       let highlightedNodes = new Set<string>();
       if (selectedNode) {
-        highlightedNodes = getNodesByDepth(selectedNode, depth, adjacency);
+        try {
+          const response = await fetch(`/api/impact?node=${selectedNode}&depth=${depth}`);
+          const result = await response.json();
+          highlightedNodes = new Set([selectedNode, ...result.nodes]);
+        } catch (err) {
+          console.error("Impact fetch failed:", err);
+          highlightedNodes = new Set([selectedNode]);
+        }
       }
 
       setNodes(
@@ -226,8 +235,8 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
         </Panel>
 
         {/* 📊 Legend */}
-        <Panel position="bottom-left" style={{ 
-          fontSize: "11px", 
+        <Panel position="bottom-left" style={{
+          fontSize: "11px",
           color: "#aaa",
           marginLeft: "40px",
           marginBottom: "10px",
@@ -245,11 +254,49 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
         {/* 🔍 Edge Details */}
         {selectedEdge && (
           <Panel position="bottom-right">
-            <div style={{ background: "#1c1917", padding: "10px" }}>
-              <p><b>Type:</b> {selectedEdge.data?.type}</p>
-              <p><b>File:</b> {selectedEdge.data?.file}</p>
-              <p><b>Line:</b> {selectedEdge.data?.line}</p>
-              <button onClick={() => setSelectedEdge(null)}>Close</button>
+            <div style={{
+              background: "#1c1917",
+              padding: "16px",
+              border: "1px solid #444",
+              borderRadius: "8px",
+              maxHeight: "300px",
+              overflowY: "auto",
+              width: "280px"
+            }}>
+              <p style={{ fontWeight: "bold", borderBottom: "1px solid #333", paddingBottom: "8px", marginBottom: "12px" }}>
+                Integrations ({selectedEdge.data?.integrations?.length || 0})
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                {selectedEdge.data?.integrations?.map((int: Integration, i: number) => (
+                  <div key={i} style={{ fontSize: "12px", background: "#262626", padding: "8px", borderRadius: "4px" }}>
+                    <p style={{ color: "#f97316", fontWeight: "bold" }}>{int.type}</p>
+                    <p style={{ color: "#aaa", marginTop: "4px" }}>
+                      <b>File:</b> {int.file?.split('/').pop()}
+                    </p>
+                    <p style={{ color: "#aaa" }}>
+                      <b>Line:</b> {int.line}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setSelectedEdge(null)}
+                style={{
+                  marginTop: "16px",
+                  width: "100%",
+                  padding: "6px",
+                  background: "#d97706",
+                  border: "none",
+                  borderRadius: "4px",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "bold"
+                }}
+              >
+                Close
+              </button>
             </div>
           </Panel>
         )}

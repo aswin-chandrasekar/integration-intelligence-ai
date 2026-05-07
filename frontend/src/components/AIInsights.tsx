@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Network, 
   ShieldAlert, 
@@ -14,7 +14,143 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
+interface InsightsData {
+  metrics: {
+    totalIntegrations: { value: number; change: string; trend: string };
+    activeSecurityRisks: { value: number; change: string; trend: string; badge: string };
+    architectureScore: { value: number; progress: number; suffix: string };
+    matchingConfidence: { value: number; detail: string; suffix: string };
+  };
+  patterns: {
+    title: string;
+    desc: string;
+    locations?: string;
+    status?: string;
+    isRisk?: boolean;
+    fullWidth?: boolean;
+    tags?: string[];
+    icon: string;
+  }[];
+  confidenceIndex: {
+    globalPrecision: number;
+    dataMapping: number;
+    securityLogic: number;
+    latencyPrediction: number;
+  };
+  risks: {
+    type: string;
+    detail: string;
+    impact: string;
+    evidence: string;
+    action?: string;
+  }[];
+  recommendations: {
+    icon: string;
+    title: string;
+    desc: string;
+  }[];
+}
+
+const getIcon = (name: string) => {
+  switch (name) {
+    case 'RefreshCw': return <RefreshCw />;
+    case 'Database': return <Database />;
+    case 'Cloud': return <Cloud />;
+    case 'Zap': return <Zap />;
+    case 'AlertCircle': return <AlertCircle />;
+    default: return <Component />;
+  }
+};
+
+const defaultData: InsightsData = {
+  metrics: {
+    totalIntegrations: { value: 142, change: "+12%", trend: "up" },
+    activeSecurityRisks: { value: 18, change: "+4", trend: "up", badge: "High" },
+    architectureScore: { value: 72, progress: 72, suffix: "/100" },
+    matchingConfidence: { value: 94, detail: "Neural precision: high", suffix: "%" }
+  },
+  patterns: [
+    {
+      title: "Event-Driven Synchronization",
+      desc: "Primary flow for high-scale messaging systems.",
+      locations: "12 Locations Found",
+      status: "STABLE",
+      icon: "RefreshCw"
+    },
+    {
+      title: "Direct SQL Access",
+      desc: "Found in legacy modules, bypasses API layers.",
+      locations: "Technical Debt Flagged",
+      status: "RISK",
+      isRisk: true,
+      icon: "Database"
+    },
+    {
+      title: "Third-Party API Dependency",
+      desc: "High reliance on Stripe and Twilio found across 8 core modules.",
+      fullWidth: true,
+      tags: ["Stripe", "Twilio"],
+      icon: "Cloud"
+    }
+  ],
+  confidenceIndex: {
+    globalPrecision: 94.2,
+    dataMapping: 98,
+    securityLogic: 89,
+    latencyPrediction: 92
+  },
+  risks: [
+    {
+      type: "Hardcoded API Credentials",
+      detail: "Possible secrets exposure in code",
+      impact: "CRITICAL",
+      evidence: "src/auth/gatekeeper.js:142"
+    },
+    {
+      type: "Unencrypted Data Transfer",
+      detail: "HTTP detected on internal microservice",
+      impact: "HIGH",
+      evidence: "config/network.yml:45"
+    },
+    {
+      type: "Stale Webhook Endpoint",
+      detail: "No traffic detected in 30 days",
+      impact: "LOW",
+      evidence: "api/v1/webhooks/legacy",
+      action: "Archive"
+    }
+  ],
+  recommendations: [
+    {
+      icon: "Zap",
+      title: "Consolidate redundant Stripe API calls",
+      desc: "The 'Checkout' and 'UserAccount' modules call Stripe's metadata endpoint separately. Move to a shared provider to save 200ms latency."
+    },
+    {
+      icon: "AlertCircle",
+      title: "Implement circuit breaker for Twilio",
+      desc: "Current integration lacks failure isolation. Implement a circuit breaker pattern to prevent cascading failures during Twilio outages."
+    }
+  ]
+};
+
 const AIInsights: React.FC = () => {
+  const [data, setData] = useState<InsightsData>(defaultData);
+
+  useEffect(() => {
+    const fetchInsights = async () => {
+      try {
+        const response = await fetch('/api/insights');
+        const jsonData = await response.json();
+        setData(jsonData);
+      } catch (error) {
+        console.error('Error fetching insights:', error);
+      }
+    };
+
+    fetchInsights();
+  }, []);
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -27,30 +163,30 @@ const AIInsights: React.FC = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
           title="Total Integrations" 
-          value="142" 
-          change="+12%" 
-          trend="up" 
+          value={data.metrics.totalIntegrations.value.toString()} 
+          change={data.metrics.totalIntegrations.change} 
+          trend={data.metrics.totalIntegrations.trend} 
           icon={<Network className="text-amber-500" />} 
         />
         <MetricCard 
           title="Active Security Risks" 
-          value="18" 
-          change="+4" 
-          trend="up" 
-          badge="High" 
+          value={data.metrics.activeSecurityRisks.value.toString()} 
+          change={data.metrics.activeSecurityRisks.change} 
+          trend={data.metrics.activeSecurityRisks.trend} 
+          badge={data.metrics.activeSecurityRisks.badge} 
           icon={<ShieldAlert className="text-orange-500" />} 
         />
         <MetricCard 
           title="Architecture Score" 
-          value="72" 
-          suffix="/100" 
-          progress={72} 
+          value={data.metrics.architectureScore.value.toString()} 
+          suffix={data.metrics.architectureScore.suffix} 
+          progress={data.metrics.architectureScore.progress} 
           icon={<Component className="text-stone-400" />} 
         />
         <MetricCard 
           title="Matching Confidence" 
-          value="94%" 
-          detail="Neural precision: high" 
+          value={`${data.metrics.matchingConfidence.value}${data.metrics.matchingConfidence.suffix}`} 
+          detail={data.metrics.matchingConfidence.detail} 
           icon={<CheckCircle2 className="text-emerald-500" />} 
         />
       </section>
@@ -64,28 +200,19 @@ const AIInsights: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <PatternCard 
-              title="Event-Driven Synchronization" 
-              desc="Primary flow for high-scale messaging systems."
-              locations="12 Locations Found"
-              status="STABLE"
-              icon={<RefreshCw />}
-            />
-            <PatternCard 
-              title="Direct SQL Access" 
-              desc="Found in legacy modules, bypasses API layers."
-              locations="Technical Debt Flagged"
-              status="RISK"
-              isRisk
-              icon={<Database />}
-            />
-            <PatternCard 
-              title="Third-Party API Dependency" 
-              desc="High reliance on Stripe and Twilio found across 8 core modules."
-              fullWidth
-              tags={['Stripe', 'Twilio']}
-              icon={<Cloud />}
-            />
+            {data.patterns.map((pattern, index) => (
+              <PatternCard 
+                key={index}
+                title={pattern.title} 
+                desc={pattern.desc}
+                locations={pattern.locations}
+                status={pattern.status}
+                isRisk={pattern.isRisk}
+                fullWidth={pattern.fullWidth}
+                tags={pattern.tags}
+                icon={getIcon(pattern.icon)}
+              />
+            ))}
           </div>
         </div>
 
@@ -97,16 +224,16 @@ const AIInsights: React.FC = () => {
               <div className="w-40 h-40 rounded-full border-8 border-stone-900 flex items-center justify-center relative">
                 <div className="absolute inset-0 rounded-full border-8 border-amber-600 border-t-transparent border-r-transparent transform -rotate-12"></div>
                 <div className="text-center">
-                  <span className="text-4xl font-black text-white block">94.2</span>
+                  <span className="text-4xl font-black text-white block">{data.confidenceIndex.globalPrecision}</span>
                   <span className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Global Precision</span>
                 </div>
               </div>
             </div>
             
             <div className="space-y-4">
-              <ConfidenceBar label="Data Mapping" value={98} />
-              <ConfidenceBar label="Security Logic" value={89} />
-              <ConfidenceBar label="Latency Prediction" value={92} />
+              <ConfidenceBar label="Data Mapping" value={data.confidenceIndex.dataMapping} />
+              <ConfidenceBar label="Security Logic" value={data.confidenceIndex.securityLogic} />
+              <ConfidenceBar label="Latency Prediction" value={data.confidenceIndex.latencyPrediction} />
             </div>
           </div>
         </div>
@@ -133,25 +260,16 @@ const AIInsights: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-stone-800">
-              <RiskRow 
-                type="Hardcoded API Credentials" 
-                detail="Possible secrets exposure in code" 
-                impact="CRITICAL" 
-                evidence="src/auth/gatekeeper.js:142"
-              />
-              <RiskRow 
-                type="Unencrypted Data Transfer" 
-                detail="HTTP detected on internal microservice" 
-                impact="HIGH" 
-                evidence="config/network.yml:45"
-              />
-              <RiskRow 
-                type="Stale Webhook Endpoint" 
-                detail="No traffic detected in 30 days" 
-                impact="LOW" 
-                evidence="api/v1/webhooks/legacy"
-                action="Archive"
-              />
+              {data.risks.map((risk, index) => (
+                <RiskRow 
+                  key={index}
+                  type={risk.type} 
+                  detail={risk.detail} 
+                  impact={risk.impact} 
+                  evidence={risk.evidence}
+                  action={risk.action}
+                />
+              ))}
             </tbody>
           </table>
         </div>
@@ -166,16 +284,14 @@ const AIInsights: React.FC = () => {
               <h3 className="text-2xl font-bold">AI Optimization Recommendations</h3>
             </div>
             <div className="space-y-4">
-              <RecommendationItem 
-                icon={<Zap />} 
-                title="Consolidate redundant Stripe API calls" 
-                desc="The 'Checkout' and 'UserAccount' modules call Stripe's metadata endpoint separately. Move to a shared provider to save 200ms latency."
-              />
-              <RecommendationItem 
-                icon={<AlertCircle />} 
-                title="Implement circuit breaker for Twilio" 
-                desc="Current integration lacks failure isolation. Implement a circuit breaker pattern to prevent cascading failures during Twilio outages."
-              />
+              {data.recommendations.map((rec, index) => (
+                <RecommendationItem 
+                  key={index}
+                  icon={getIcon(rec.icon)} 
+                  title={rec.title} 
+                  desc={rec.desc}
+                />
+              ))}
             </div>
           </div>
           

@@ -11,7 +11,8 @@ def extract_flask_routes(file_path):
                 routes.append({
                     "type": "INBOUND_API",
                     "path": file_path,
-                    "line": node.lineno
+                    "line": node.lineno,
+                    "confidence": "100% (AST Route Match)"
                 })
  
     return routes
