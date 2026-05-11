@@ -91,20 +91,24 @@ def edges():
 @api.route("/api/impact/<system_name>", methods=["GET"])
 def system_impact(system_name):
     depth = int(request.args.get("depth", 1))
-    downstream = get_downstream(system_name, depth)
-    upstream = get_upstream(system_name, depth)
+    direction = request.args.get("direction", "both")
+    
+    result = get_impact(system_name, depth, direction)
+    
+    # Map backend edge keys ("src_tgt") to UI ReactFlow IDs ("e-src-tgt")
+    formatted_edges = [f"e-{key.replace('_', '-')}" for key in result.get("edge_keys", [])]
+    
     return jsonify({
-        "system": system_name,
-        "depth": depth,
-        "downstream": downstream,
-        "upstream": upstream
+        "nodes": result.get("nodes", []),
+        "edges": formatted_edges
     })
 @api.route("/api/impact", methods=["GET"])
 def node_impact():
     node = request.args.get("node")
     depth = int(request.args.get("depth", 1))
+    direction = request.args.get("direction", "both")
 
-    result = get_impact(node, depth)
+    result = get_impact(node, depth, direction)
 
     return jsonify(result)
 

@@ -65,7 +65,8 @@ async function startServer() {
     try {
       const node = req.query.node;
       const depth = req.query.depth || 1;
-      const response = await fetch(`http://127.0.0.1:5000/api/impact?node=${node}&depth=${depth}`);
+      const direction = req.query.direction || "both";
+      const response = await fetch(`http://127.0.0.1:5000/api/impact?node=${node}&depth=${depth}&direction=${direction}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       res.json(await response.json());
     } catch (e) {
@@ -77,7 +78,8 @@ async function startServer() {
   app.get("/api/impact/:system_name", async (req, res) => {
     try {
       const depth = req.query.depth || 1;
-      const response = await fetch(`http://127.0.0.1:5000/api/impact/${req.params.system_name}?depth=${depth}`);
+      const direction = req.query.direction || "both";
+      const response = await fetch(`http://127.0.0.1:5000/api/impact/${req.params.system_name}?depth=${depth}&direction=${direction}`);
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
       res.json(await response.json());
     } catch (e) {

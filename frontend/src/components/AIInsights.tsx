@@ -338,7 +338,7 @@ const PatternCard: React.FC<{ title: string; desc: string; locations?: string; s
   <div className={`bg-[#1c1917] border border-stone-800 p-6 rounded-xl space-y-4 ${fullWidth ? 'md:col-span-2' : ''}`}>
     <div className="flex items-start gap-4">
       <div className={`p-3 rounded-xl ${isRisk ? 'bg-orange-950/30 text-orange-500' : 'bg-stone-900 text-amber-500'}`}>
-        {React.cloneElement(icon as React.ReactElement, { className: 'w-6 h-6' })}
+        {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-6 h-6' })}
       </div>
       <div className="flex-1">
         <h4 className="text-sm font-bold text-white">{title}</h4>
@@ -405,7 +405,7 @@ const RiskRow: React.FC<{ type: string; detail: string; impact: string; evidence
 const RecommendationItem: React.FC<{ icon: React.ReactNode; title: string; desc: string }> = ({ icon, title, desc }) => (
   <li className="flex gap-4 p-5 bg-stone-950/40 rounded-xl backdrop-blur-md border border-amber-900/10 hover:border-amber-900/30 transition-all list-none">
     <div className="text-amber-500 mt-1">
-      {React.cloneElement(icon as React.ReactElement, { className: 'w-5 h-5' })}
+      {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
     </div>
     <div>
       <p className="text-white font-bold text-sm">{title}</p>

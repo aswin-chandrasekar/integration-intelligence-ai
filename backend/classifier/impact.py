@@ -1,64 +1,69 @@
 from collections import defaultdict, deque
 import json
-
 import os
+
+import re
 
 def load_edges():
     base_dir = os.path.dirname(os.path.dirname(__file__))
     file_path = os.path.join(base_dir, "data", "edges.json")
     if not os.path.exists(file_path):
         file_path = "backend/data/edges.json"
+    if not os.path.exists(file_path):
+        return []
     with open(file_path) as f:
         return json.load(f)
 
+def normalize_id(text: str) -> str:
+    return re.sub(r'\s+', '-', text.strip().lower())
 
-def build_graph(edges):
-    graph = defaultdict(set)
-
-    for e in edges:
-        src = e["source"].lower().replace(" ", "-")
-        tgt = e["target"].lower().replace(" ", "-")
-
-        graph[src].add(tgt)
-        graph[tgt].add(src)
-
-    return graph
-
-
-def get_impact(node: str, depth: int):
+def get_impact(node: str, depth: int, direction: str = "both"):
     edges = load_edges()
-    graph = build_graph(edges)
-
-    node = node.lower().replace(" ", "-")
-
-    visited = set([node])
-    queue = deque([(node, 0)])
-
-    impacted_nodes = set()
-    impacted_edges = []
-
-    while queue:
-        current, level = queue.popleft()
-
-        if level >= depth:
-            continue
-
-        for neighbor in graph[current]:
-            if neighbor not in visited:
-                visited.add(neighbor)
-                impacted_nodes.add(neighbor)
-
-                queue.append((neighbor, level + 1))
-
-    # collect edges
+    node_id = normalize_id(node)
+    
+    # Build directed maps
+    down_map = defaultdict(set)
+    up_map = defaultdict(set)
+    
     for e in edges:
-        src = e["source"].lower().replace(" ", "-")
-        tgt = e["target"].lower().replace(" ", "-")
-
-        if src in impacted_nodes or tgt in impacted_nodes:
-            impacted_edges.append(e)
-
+        src = normalize_id(e["source"])
+        tgt = normalize_id(e["target"])
+        down_map[src].add(tgt)
+        up_map[tgt].add(src)
+        
+    impacted_nodes = {node_id}
+    impacted_edge_keys = set() # Store as "src_tgt"
+    
+    visited = {node_id}
+    queue = deque([(node_id, 0)])
+    
+    while queue:
+        curr, lvl = queue.popleft()
+        
+        if lvl >= depth:
+            continue
+            
+        # Traverse Downstream
+        if direction in ("downstream", "both"):
+            for neighbor in down_map[curr]:
+                # Capture edge MUST point from curr to neighbor
+                impacted_edge_keys.add(f"{curr}_{neighbor}")
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    impacted_nodes.add(neighbor)
+                    queue.append((neighbor, lvl + 1))
+                    
+        # Traverse Upstream
+        if direction in ("upstream", "both"):
+            for neighbor in up_map[curr]:
+                # Capture edge MUST point from neighbor to curr (upstream flow)
+                impacted_edge_keys.add(f"{neighbor}_{curr}")
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    impacted_nodes.add(neighbor)
+                    queue.append((neighbor, lvl + 1))
+                    
     return {
         "nodes": list(impacted_nodes),
-        "edges": impacted_edges
+        "edge_keys": list(impacted_edge_keys)
     }

@@ -117,7 +117,7 @@ const NavItem: React.FC<NavItemProps> = ({ icon, label, active, onClick }) => (
         : 'text-stone-500 hover:bg-stone-900 font-medium'
     }`}
   >
-    {React.cloneElement(icon as React.ReactElement, { className: 'w-5 h-5' })}
+    {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-5 h-5' })}
     <span className="text-sm">{label}</span>
   </button>
 );

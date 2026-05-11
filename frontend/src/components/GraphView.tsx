@@ -22,6 +22,7 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
   const [selectedEdge, setSelectedEdge] = useState<any>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [depth, setDepth] = useState<number>(1);
+  const [direction, setDirection] = useState<string>("both"); // "upstream", "downstream", "both"
 
   // Keep track of positions so nodes don't jump on every click
   const nodePositions = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -142,11 +143,13 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
       });
 
       let highlightedNodes = new Set<string>();
+      let highlightedEdgeKeys = new Set<string>();
       if (selectedNode) {
         try {
-          const response = await fetch(`/api/impact?node=${selectedNode}&depth=${depth}`);
+          const response = await fetch(`/api/impact?node=${selectedNode}&depth=${depth}&direction=${direction}`);
           const result = await response.json();
-          highlightedNodes = new Set([selectedNode, ...result.nodes]);
+          highlightedNodes = new Set([selectedNode, ...(result.nodes || [])]);
+          highlightedEdgeKeys = new Set(result.edge_keys || []);
         } catch (err) {
           console.error("Impact fetch failed:", err);
           highlightedNodes = new Set([selectedNode]);
@@ -164,16 +167,27 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
       );
 
       setEdges(
-        flowEdges.map((edge) => ({
-          ...edge,
-          style: {
-            ...edge.style,
-            opacity: !selectedNode || (highlightedNodes.has(edge.source) && highlightedNodes.has(edge.target)) ? 1 : 0.1,
-          },
-        }))
+        flowEdges.map((edge) => {
+          let isHighlighted = !selectedNode || highlightedEdgeKeys.has(`${edge.source}_${edge.target}`);
+          
+          // Enforce direction locally to overcome any backend proxy defaults
+          if (selectedNode && isHighlighted && direction !== "both") {
+            if (direction === "downstream" && !highlightedNodes.has(edge.source)) isHighlighted = false;
+            if (direction === "upstream" && !highlightedNodes.has(edge.target)) isHighlighted = false;
+          }
+
+          return {
+            ...edge,
+            animated: !!selectedNode ? isHighlighted : true,
+            style: {
+              ...edge.style,
+              opacity: isHighlighted ? 1 : 0.05,
+            },
+          };
+        })
       );
     },
-    [setNodes, setEdges, selectedNode, depth]
+    [setNodes, setEdges, selectedNode, depth, direction]
   );
 
   useEffect(() => {
@@ -196,36 +210,75 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
         <Background color="#292524" gap={20} />
         <Controls />
 
-        {/* 🔥 Depth Control */}
+        {/* 🔥 Blast Radius Controls */}
         <Panel position="top-left">
           <div style={{
             background: "#1c1917",
-            padding: "8px",
+            padding: "10px",
             borderRadius: "8px",
             border: "1px solid #444",
-            color: "white"
+            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
           }}>
-            <p style={{ fontSize: "12px", marginBottom: "4px" }}>
-              Blast Radius Depth
-            </p>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>
+                Direction
+              </p>
+              <div style={{ display: "flex", gap: "4px" }}>
+                {[
+                  { val: "upstream", lbl: "Up" },
+                  { val: "downstream", lbl: "Down" },
+                  { val: "both", lbl: "Both" }
+                ].map((dir) => (
+                  <button
+                    key={dir.val}
+                    onClick={() => setDirection(dir.val)}
+                    style={{
+                      padding: "3px 6px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      background: direction === dir.val ? "#d97706" : "#262626",
+                      color: direction === dir.val ? "white" : "#aaa",
+                      border: "1px solid #333",
+                      borderRadius: "4px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    {dir.lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {[1, 2, 3].map((d) => (
-              <button
-                key={d}
-                onClick={() => setDepth(d)}
-                style={{
-                  marginRight: "5px",
-                  padding: "4px 8px",
-                  background: depth === d ? "#d97706" : "#333",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer"
-                }}
-              >
-                {d}
-              </button>
-            ))}
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>
+                Depth
+              </p>
+              <div style={{ display: "flex", gap: "4px" }}>
+                {[1, 2, 3].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setDepth(d)}
+                    style={{
+                      padding: "3px 8px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      background: depth === d ? "#d97706" : "#262626",
+                      color: depth === d ? "white" : "#aaa",
+                      border: "1px solid #333",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      minWidth: "24px"
+                    }}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </Panel>
 
