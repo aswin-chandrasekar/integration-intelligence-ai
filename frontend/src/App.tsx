@@ -12,6 +12,8 @@ import ResultsTable from './components/ResultsTable';
 import AIInsights from './components/AIInsights';
 import { getIntegrations, Integration } from './services/api';
 import GraphView from "./components/GraphView.tsx";
+import RecommendationsPanel from "./components/RecommendationsPanel.tsx";
+import ArchitectSummaryPanel from "./components/ArchitectSummaryPanel";
 
 export const runScan = async (repoPath: string) => {
   await fetch("/api/scan", {
@@ -46,24 +48,10 @@ export default function App() {
     fetchIntegrations();
   }, []);
 
-  const scrollToSection = (id: string) => {
-    setCurrentView('dashboard');
-    setTimeout(() => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-
   return (
     <div className="min-h-screen bg-[#0c0a09]">
       <TopNav />
-      <Sidebar 
-        currentView={currentView} 
-        onViewChange={setCurrentView} 
-        onSectionClick={scrollToSection}
-      />
+      <Sidebar currentView={currentView} onViewChange={setCurrentView} />
       
       <main className="lg:ml-72 p-8 min-h-[calc(100vh-64px)] overflow-y-auto">
         {/* <p style={{ color: "red" }}>CURRENT VIEW: {currentView}</p> */}
@@ -87,7 +75,7 @@ export default function App() {
               <div className="grid grid-cols-12 gap-8">
                 
                 {/* 1. Repository Scan Section */}
-                <div id="scan-section" className="col-span-12">
+                <div className="col-span-12">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -98,7 +86,7 @@ export default function App() {
                 </div>
 
                 {/* 3. Graph View Section Placeholder */}
-                <div id="graph-section" className="col-span-12 h-full">
+                <div className="col-span-12 h-full">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -121,9 +109,30 @@ export default function App() {
                     </div>
                   </motion.div>
                 </div>
+                
+                {/* Recommendations Section */}
+                <div className="col-span-12">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
+                    <RecommendationsPanel />
+                  </motion.div>
+                </div>
+                {/* Architect Summary */}
+                <div className="col-span-12">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: 0.25 }}
+                  >
+                    <ArchitectSummaryPanel />
+                  </motion.div>
+                </div>
 
                 {/* Integration Catalog Section */}
-                <div id="catalog-section" className="col-span-12">
+                <div className="col-span-12">
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

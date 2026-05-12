@@ -38,3 +38,13 @@ export const getEdges = async () => {
   const res = await axios.get(`${BASE_URL}/edges`);
   return res.data;
 };
+
+export const getRiskAnalysis = async () => {
+  const res = await fetch("/api/risk-analysis");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch risk analysis");
+  }
+
+  return res.json();
+};

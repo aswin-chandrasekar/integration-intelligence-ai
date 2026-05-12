@@ -9,7 +9,8 @@ import ReactFlow, {
   Panel,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Integration } from "../services/api";
+import { Integration, getRiskAnalysis} from "../services/api";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface GraphViewProps {
   data?: Integration[];
@@ -23,6 +24,8 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [depth, setDepth] = useState<number>(1);
   const [direction, setDirection] = useState<string>("both"); // "upstream", "downstream", "both"
+  const [riskData, setRiskData] = useState<any[]>([]);
+  const [riskPanelCollapsed, setRiskPanelCollapsed] = useState<boolean>(false);
 
   // Keep track of positions so nodes don't jump on every click
   const nodePositions = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -73,37 +76,72 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
 
         // 1. Manage Nodes
         if (!nodesMap.has(sourceId)) {
-          nodesMap.set(sourceId, {
-            id: sourceId,
-            data: { label: item.source },
-            position: getPos(sourceId),
-            style: {
-              background: "#f97316",
-              color: "#fff",
-              borderRadius: "8px",
-              border: "1px solid #92400e",
-              fontWeight: "bold",
-              fontSize: "12px",
-              width: 150,
-            },
-          });
-        }
-        if (!nodesMap.has(targetId)) {
-          nodesMap.set(targetId, {
-            id: targetId,
-            data: { label: item.target },
-            position: getPos(targetId),
-            style: {
-              background: "#0c0a09",
-              color: "#d97706",
-              borderRadius: "8px",
-              border: `2px solid #d97706`,
-              fontWeight: "bold",
-              fontSize: "12px",
-              width: 150,
-            },
-          });
-        }
+  const sourceRisk = getRiskLevel(item.source);
+  nodesMap.set(sourceId, {
+    id: sourceId,
+    data: { label: item.source },
+    position: getPos(sourceId),
+    style: {
+      background:
+        selectedNode === sourceId
+          ? "#ffffff"
+          : getRiskColor(sourceRisk),
+      color:
+        sourceRisk === "MEDIUM"
+          ? "#000"
+          : "#fff",
+      border:
+        selectedNode === sourceId
+          ? "4px solid #fff"
+          : `2px solid ${getRiskColor(sourceRisk)}`,
+      borderRadius: "10px",
+      padding: "10px",
+      width: 170,
+      fontWeight: "bold",
+      fontSize: "12px",
+      boxShadow:
+        sourceRisk === "CRITICAL"
+          ? "0 0 25px rgba(239,68,68,0.7)"
+          : sourceRisk === "HIGH"
+          ? "0 0 20px rgba(249,115,22,0.5)"
+          : "none",
+    },
+  });
+}
+
+if (!nodesMap.has(targetId)) {
+  const targetRisk = getRiskLevel(item.target);
+  nodesMap.set(targetId, {
+    id: targetId,
+    data: { label: item.target },
+    position: getPos(targetId),
+    style: {
+      background:
+        selectedNode === targetId
+          ? "#fca32eff"
+          : getRiskColor(targetRisk),
+      color:
+        targetRisk === "MEDIUM"
+          ? "#000"
+          : "#fff",
+      border:
+        selectedNode === targetId
+          ? "4px solid #fff"
+          : `2px solid ${getRiskColor(targetRisk)}`,
+      borderRadius: "10px",
+      padding: "10px",
+      width: 170,
+      fontWeight: "bold",
+      fontSize: "12px",
+      boxShadow:
+        targetRisk === "CRITICAL"
+          ? "0 0 25px rgba(239,68,68,0.7)"
+          : targetRisk === "HIGH"
+          ? "0 0 20px rgba(249,115,22,0.5)"
+          : "none",
+    },
+  });
+}
 
         // 2. Group Edges
         if (!groupedEdges.has(edgeKey)) {
@@ -191,11 +229,56 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
   );
 
   useEffect(() => {
+
+  getRiskAnalysis()
+    .then((data) => {
+      console.log("Risk Analysis:", data);
+      setRiskData(data);
+    })
+    .catch((err) => {
+      console.error("Risk analysis failed:", err);
+    });
+
+}, []);
+
+const getRiskLevel = (systemName: string) => {
+
+  const match = riskData.find(
+    (r) =>
+      r.system.toLowerCase() ===
+      systemName.toLowerCase()
+  );
+
+  return match?.riskLevel || "LOW";
+};
+
+const getRiskColor = (risk: string) => {
+
+  switch (risk) {
+
+    case "CRITICAL":
+      return "#ef4444";
+
+    case "HIGH":
+      return "#f97316";
+
+    case "MEDIUM":
+      return "#eab308";
+
+    case "LOW":
+      return "#22c55e";
+
+    default:
+      return "#a8a29e";
+  }
+};
+
+  useEffect(() => {
     updateGraph(data);
   }, [data, updateGraph]);
 
   return (
-    <div style={{ height: "100%", minHeight: "400px", width: "100%" }}>
+    <div style={{ height: "100%", minHeight: "500px", width: "100%" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -210,21 +293,22 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
         <Background color="#292524" gap={20} />
         <Controls />
 
-        {/* 🔥 Blast Radius Controls */}
+        {/* Blast Radius Controls + Legend */}
         <Panel position="top-left">
           <div style={{
             background: "#1c1917",
-            padding: "10px",
+            padding: "12px",
             borderRadius: "8px",
             border: "1px solid #444",
             color: "white",
             display: "flex",
             flexDirection: "column",
-            gap: "8px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
+            gap: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            width: "280px"
           }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>
+              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
                 Direction
               </p>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -254,7 +338,7 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
             </div>
 
             <div>
-              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#888", marginBottom: "4px" }}>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px" }}>
                 Depth
               </p>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -279,32 +363,161 @@ const GraphView = ({ data = [] }: GraphViewProps) => {
                 ))}
               </div>
             </div>
+
+            {/* Legend */}
+            <div style={{ borderTop: "1px solid #333", paddingTop: "8px" }}>
+              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
+                Risk Levels
+              </p>
+              <div style={{ display: "flex", gap: "8px", fontSize: "10px", marginBottom: "6px" }}>
+                <div style={{ color: "#ef4444" }}>🔴 CRITICAL</div>
+                <div style={{ color: "#f97316" }}>🟠 HIGH</div>
+              </div>
+              <div style={{ display: "flex", gap: "8px", fontSize: "10px" }}>
+                <div style={{ color: "#eab308" }}>🟡 MEDIUM</div>
+                <div style={{ color: "#22c55e" }}>🟢 LOW</div>
+              </div>
+
+              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
+                Integration Types
+              </p>
+              <div style={{ display: "flex", gap: "8px", fontSize: "10px", marginBottom: "4px" }}>
+                <div>🟠 API</div>
+                <div>🔵 DB</div>
+              </div>
+              <div style={{ display: "flex", gap: "8px", fontSize: "10px" }}>
+                <div>🟣 File</div>
+                <div>🟢 Pub/Sub</div>
+              </div>
+            </div>
           </div>
         </Panel>
 
-        {/* 🔝 Count */}
+        {/* System Count & Architecture Risk Ranking */}
         <Panel position="top-right">
-          {nodes.length} SYSTEMS DETECTED
+          <div
+            style={{
+              background: "#1c1917",
+              padding: "12px",
+              borderRadius: "10px",
+              border: "1px solid #444",
+              width: "280px",
+              color: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
+            }}
+          >
+            {/* System Count Header */}
+            <div
+              style={{
+                fontSize: "12px",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                color: "#888",
+                marginBottom: "12px",
+                paddingBottom: "8px",
+                borderBottom: "1px solid #333"
+              }}
+            >
+              📊 {nodes.length} Systems Detected
+            </div>
+
+            {/* Risk Ranking Section */}
+            <div>
+              <button
+                onClick={() => setRiskPanelCollapsed(!riskPanelCollapsed)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "8px 0",
+                  background: "none",
+                  border: "none",
+                  color: "white",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  fontSize: "12px",
+                  textTransform: "uppercase",
+                }}
+              >
+                🎯 Architecture Risk Ranking
+                {riskPanelCollapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+              </button>
+
+              {!riskPanelCollapsed && (
+                <div
+                  style={{
+                    maxHeight: "320px",
+                    overflowY: "auto",
+                    marginTop: "8px",
+                  }}
+                >
+                  {riskData.slice(0, 8).map((risk, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        marginBottom: "10px",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        background: "#262626",
+                        borderLeft: `5px solid ${getRiskColor(
+                          risk.riskLevel
+                        )}`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: "bold",
+                            fontSize: "12px",
+                          }}
+                        >
+                          {risk.system}
+                        </span>
+
+                        <span
+                          style={{
+                            color: getRiskColor(risk.riskLevel),
+                            fontWeight: "bold",
+                            fontSize: "11px",
+                          }}
+                        >
+                          {risk.riskLevel}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop: "6px",
+                          fontSize: "11px",
+                          color: "#aaa",
+                        }}
+                      >
+                        Risk Score: {risk.riskScore}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          color: "#777",
+                        }}
+                      >
+                        Fan-Out: {risk.fanOut} | Sync Depth: {risk.syncDepth}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </Panel>
 
-        {/* 📊 Legend */}
-        <Panel position="bottom-left" style={{
-          fontSize: "11px",
-          color: "#aaa",
-          marginLeft: "40px",
-          marginBottom: "10px",
-          background: "rgba(28, 25, 23, 0.8)",
-          padding: "8px",
-          borderRadius: "6px",
-          border: "1px solid #444"
-        }}>
-          <div>🟠 API</div>
-          <div>🔵 Database</div>
-          <div>🟣 File/Batch</div>
-          <div>🟢 Pub/Sub</div>
-        </Panel>
-
-        {/* 🔍 Edge Details */}
+        {/* Edge Details */}
         {selectedEdge && (
           <Panel position="bottom-right">
             <div style={{

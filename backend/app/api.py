@@ -1,3 +1,4 @@
+from collections import defaultdict
 from flask import Blueprint, request, jsonify
 from backend.app.scanner.repo_scanner import get_python_files
 from backend.app.scanner.flask_parser import extract_flask_routes
@@ -6,6 +7,8 @@ from backend.app.scanner.db_parser import extract_db_calls
 from backend.app.scanner.file_parser import extract_file_ops
 from backend.app.models.edge import make_edge
 from backend.classifier.impact import get_impact
+from backend.classifier.recommendation_engine import generate_recommendations
+from backend.classifier.risk_engine import calculate_risk
 import json
 import os
 from backend.impact.impact_analysis import get_downstream, get_upstream
@@ -111,6 +114,145 @@ def node_impact():
     result = get_impact(node, depth, direction)
 
     return jsonify(result)
+
+@api.route("/api/recommendations", methods=["GET"])
+def recommendations():
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    results = generate_recommendations(edges)
+
+    return jsonify(results)
+
+@api.route("/api/risk-analysis", methods=["GET"])
+def risk_analysis():
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+
+    if os.path.exists(file_path):
+
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    results = calculate_risk(edges)
+
+    return jsonify(results)
+
+@api.route("/api/architect-summary", methods=["GET"])
+def architect_summary():
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    # -----------------------------
+    # System Metrics
+    # -----------------------------
+    systems = set()
+
+    fan_out = defaultdict(int)
+    fan_in = defaultdict(int)
+
+    sync_edges = 0
+    db_edges = 0
+    file_edges = 0
+
+    for edge in edges:
+
+        source = edge.get("source")
+        target = edge.get("target")
+        edge_type = edge.get("type")
+
+        systems.add(source)
+        systems.add(target)
+
+        fan_out[source] += 1
+        fan_in[target] += 1
+
+        if edge_type == "SYNC_API":
+            sync_edges += 1
+
+        if edge_type == "DB":
+            db_edges += 1
+
+        if edge_type == "FILE":
+            file_edges += 1
+
+    # -----------------------------
+    # Most Coupled System
+    # -----------------------------
+    most_coupled = None
+    max_connections = 0
+
+    for system in systems:
+
+        total = fan_out[system] + fan_in[system]
+
+        if total > max_connections:
+            max_connections = total
+            most_coupled = system
+
+    # -----------------------------
+    # Risk Level
+    # -----------------------------
+    if sync_edges >= 10:
+        overall_risk = "HIGH"
+
+    elif sync_edges >= 5:
+        overall_risk = "MEDIUM"
+
+    else:
+        overall_risk = "LOW"
+
+    # -----------------------------
+    # Summary Text
+    # -----------------------------
+    summary = f"""
+This repository contains {len(edges)} detected integrations across {len(systems)} systems.
+
+The architecture is primarily driven by synchronous API communication patterns, with {sync_edges} synchronous integrations detected.
+
+The most connected system is '{most_coupled}', which may represent a central orchestration or coupling hotspot with {max_connections} total upstream/downstream dependencies.
+
+Database integrations detected: {db_edges}
+File-based integrations detected: {file_edges}
+
+Overall architecture operational risk is assessed as {overall_risk} based on synchronous dependency concentration and integration centrality patterns.
+
+Recommended modernization focus areas include:
+- Reducing synchronous coupling
+- Introducing asynchronous event-driven flows
+- Breaking high fan-out dependencies
+- Isolating critical orchestration systems
+"""
+
+    return jsonify({
+        "summary": summary.strip(),
+        "systems": len(systems),
+        "integrations": len(edges),
+        "syncIntegrations": sync_edges,
+        "dbIntegrations": db_edges,
+        "fileIntegrations": file_edges,
+        "mostCoupledSystem": most_coupled,
+        "overallRisk": overall_risk
+    })
 
 @api.route("/api/insights", methods=["GET"])
 def get_insights():

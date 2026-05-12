@@ -99,6 +99,39 @@ async function startServer() {
     }
   });
 
+  app.get("/api/recommendations", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/recommendations");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching recommendations from backend:", e);
+      res.status(500).json({ error: "Could not fetch recommendations from backend" });
+    }
+  });
+
+  app.get("/api/risk-analysis", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/risk-analysis");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching risk analysis from backend:", e);
+      res.status(500).json({ error: "Could not fetch risk analysis from backend" });
+    }
+  });
+
+  app.get("/api/architect-summary", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/architect-summary");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching architect summary from backend:", e);
+      res.status(500).json({ error: "Could not fetch architect summary from backend" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
