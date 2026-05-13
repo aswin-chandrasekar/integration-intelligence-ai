@@ -368,3 +368,66 @@ def get_insights():
             }
         ]
     })
+
+@api.route("/api/export/mermaid", methods=["GET"])
+def export_mermaid():
+
+    system = request.args.get("system")
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    if not os.path.exists(file_path):
+        return jsonify({
+            "diagram": "graph TD\nA[No Data]"
+        })
+
+    with open(file_path) as f:
+        edges = json.load(f)
+
+    relevant_edges = []
+
+    # If system selected → export only related graph
+    if system:
+        normalized = system.lower().replace(" ", "-")
+
+        for edge in edges:
+
+            src = edge.get("source", "")
+            tgt = edge.get("target", "")
+
+            src_id = src.lower().replace(" ", "-")
+            tgt_id = tgt.lower().replace(" ", "-")
+
+            if normalized in [src_id, tgt_id]:
+                relevant_edges.append(edge)
+
+    else:
+        relevant_edges = edges
+
+    lines = ["graph TD"]
+
+    added = set()
+
+    for edge in relevant_edges:
+
+        src = edge["source"]
+        tgt = edge["target"]
+        edge_type = edge.get("type", "LINK")
+
+        key = f"{src}->{tgt}"
+
+        if key in added:
+            continue
+
+        added.add(key)
+
+        lines.append(
+            f'    "{src}" -->|{edge_type}| "{tgt}"'
+        )
+
+    diagram = "\n".join(lines)
+
+    return jsonify({
+        "diagram": diagram
+    })

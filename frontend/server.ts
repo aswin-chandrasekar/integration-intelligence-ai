@@ -61,6 +61,22 @@ async function startServer() {
     }
   });
 
+  app.get("/api/export/mermaid", async (req, res) => {
+    try {
+      const query = new URLSearchParams(req.query as Record<string, string>).toString();
+      const url = `http://127.0.0.1:5000/api/export/mermaid${query ? `?${query}` : ""}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (e) {
+      console.error("Error fetching Mermaid export from backend:", e);
+      res.status(500).json({ error: "Could not export Mermaid diagram" });
+    }
+  });
+
   app.get("/api/impact", async (req, res) => {
     try {
       const node = req.query.node;

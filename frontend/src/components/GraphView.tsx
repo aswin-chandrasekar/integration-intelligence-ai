@@ -14,9 +14,10 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface GraphViewProps {
   data?: Integration[];
+  onSelectedSystemChange?: (system: string | null) => void;
 }
 
-const GraphView = ({ data = [] }: GraphViewProps) => {
+const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -276,6 +277,10 @@ const getRiskColor = (risk: string) => {
   useEffect(() => {
     updateGraph(data);
   }, [data, updateGraph]);
+
+  useEffect(() => {
+    onSelectedSystemChange?.(selectedNode);
+  }, [selectedNode, onSelectedSystemChange]);
 
   return (
     <div style={{ height: "100%", minHeight: "500px", width: "100%" }}>

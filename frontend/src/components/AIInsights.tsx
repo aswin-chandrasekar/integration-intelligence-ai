@@ -1,18 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Network, 
-  ShieldAlert, 
-  Component, 
-  CheckCircle2, 
-  RefreshCw, 
-  Database, 
-  Cloud, 
-  Link, 
-  Lightbulb, 
-  Zap, 
-  AlertCircle 
+import {
+  Network,
+  ShieldAlert,
+  Component,
+  CheckCircle2,
+  RefreshCw,
+  Database,
+  Cloud,
+  Link,
+  Lightbulb,
+  Zap,
+  AlertCircle,
+  ArrowLeft,
+  LayoutDashboard,
+  Activity,
+  Database as DatabaseIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import RecommendationsPanel from './RecommendationsPanel';
+import ArchitectSummaryPanel from './ArchitectSummaryPanel';
+
+interface AIInsightsProps {
+  onNavigateToDashboard?: () => void;
+  onNavigateToSection?: (sectionId: string) => void;
+  integrations?: any[];
+}
 
 interface InsightsData {
   metrics: {
@@ -134,8 +146,164 @@ const defaultData: InsightsData = {
   ]
 };
 
-const AIInsights: React.FC = () => {
+const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNavigateToSection, integrations = [] }) => {
   const [data, setData] = useState<InsightsData>(defaultData);
+
+  // Calculate metrics based on integrations data
+  const calculateMetrics = (integrations: any[]) => {
+    const totalIntegrations = integrations.length;
+
+    // Calculate architecture score based on integration patterns
+    const syncIntegrations = integrations.filter(i => i.type === 'SYNC_API').length;
+    const dbIntegrations = integrations.filter(i => i.type === 'DB').length;
+    const fileIntegrations = integrations.filter(i => i.type === 'FILE').length;
+
+    // Architecture score: higher is better (100 - penalties for risky patterns)
+    let architectureScore = 100;
+    architectureScore -= syncIntegrations * 2; // Penalty for sync APIs
+    architectureScore -= dbIntegrations * 3; // Penalty for direct DB access
+    architectureScore -= fileIntegrations * 1; // Penalty for file-based integrations
+    architectureScore = Math.max(0, Math.min(100, architectureScore));
+
+    // Calculate security risks based on patterns
+    let securityRisks = 0;
+    if (dbIntegrations > 0) securityRisks += dbIntegrations; // Direct DB access is a risk
+    if (fileIntegrations > 0) securityRisks += Math.floor(fileIntegrations / 2); // File access can be risky
+    if (syncIntegrations > 10) securityRisks += 5; // Too many sync integrations
+
+    // Calculate matching confidence based on evidence quality
+    const avgConfidence = integrations.length > 0
+      ? integrations.reduce((sum, i) => {
+          const confidence = i.confidence || '0%';
+          const match = confidence.match(/(\d+)/);
+          return sum + (match ? parseInt(match[1]) : 0);
+        }, 0) / integrations.length
+      : 0;
+
+    // Generate architectural patterns
+    const patterns = [];
+
+    // Event-Driven Synchronization
+    const hasEventDriven = integrations.some(i => i.type === 'PUB_SUB' || i.type === 'ASYNC_API');
+    if (hasEventDriven || syncIntegrations < totalIntegrations * 0.3) {
+      patterns.push({
+        title: "Event-Driven Synchronization",
+        desc: hasEventDriven ? "Primary flow for high-scale messaging systems." : "Limited synchronous coupling detected.",
+        locations: hasEventDriven ? `${integrations.filter(i => i.type === 'PUB_SUB' || i.type === 'ASYNC_API').length} Locations Found` : "Recommended Pattern",
+        status: hasEventDriven ? "STABLE" : "OPTIMAL",
+        icon: "RefreshCw"
+      });
+    }
+
+    // Direct SQL Access
+    if (dbIntegrations > 0) {
+      patterns.push({
+        title: "Direct SQL Access",
+        desc: "Found in legacy modules, bypasses API layers.",
+        locations: `${dbIntegrations} Locations Found`,
+        status: "RISK",
+        isRisk: true,
+        icon: "Database"
+      });
+    }
+
+    // Third-Party API Dependency
+    const thirdPartyAPIs = integrations.filter(i =>
+      i.target && (i.target.toLowerCase().includes('stripe') ||
+                   i.target.toLowerCase().includes('twilio') ||
+                   i.target.toLowerCase().includes('aws') ||
+                   i.target.toLowerCase().includes('google'))
+    );
+    if (thirdPartyAPIs.length > 0) {
+      patterns.push({
+        title: "Third-Party API Dependency",
+        desc: `High reliance on external services found across ${thirdPartyAPIs.length} integrations.`,
+        fullWidth: true,
+        tags: [...new Set(thirdPartyAPIs.map(i => i.target.split('.')[0]))],
+        icon: "Cloud"
+      });
+    }
+
+    // Calculate confidence index
+    const confidenceIndex = {
+      globalPrecision: Math.round(avgConfidence),
+      dataMapping: Math.round(avgConfidence * 1.1),
+      securityLogic: Math.round(85 + (avgConfidence * 0.1)),
+      latencyPrediction: Math.round(88 + (avgConfidence * 0.1))
+    };
+
+    // Generate security risks
+    const risks = [];
+    if (dbIntegrations > 0) {
+      risks.push({
+        type: "Direct Database Access",
+        detail: `${dbIntegrations} direct database connections detected`,
+        impact: dbIntegrations > 3 ? "CRITICAL" : "HIGH",
+        evidence: "Multiple integration points",
+        action: "Implement API abstraction layer"
+      });
+    }
+
+    if (fileIntegrations > 0) {
+      risks.push({
+        type: "File-Based Integration",
+        detail: `${fileIntegrations} file-based integrations found`,
+        impact: "MEDIUM",
+        evidence: "File system dependencies",
+        action: "Migrate to API-based integration"
+      });
+    }
+
+    if (syncIntegrations > 10) {
+      risks.push({
+        type: "High Synchronous Coupling",
+        detail: `${syncIntegrations} synchronous integrations may cause cascading failures`,
+        impact: "HIGH",
+        evidence: "Architecture analysis",
+        action: "Implement circuit breakers"
+      });
+    }
+
+    // Generate recommendations
+    const recommendations = [];
+    if (dbIntegrations > 0) {
+      recommendations.push({
+        icon: "Database",
+        title: "Implement Database Abstraction Layer",
+        desc: `Replace ${dbIntegrations} direct database connections with API-based access patterns.`
+      });
+    }
+
+    if (syncIntegrations > totalIntegrations * 0.5) {
+      recommendations.push({
+        icon: "Zap",
+        title: "Reduce Synchronous Dependencies",
+        desc: `Convert ${Math.floor(syncIntegrations * 0.3)} synchronous integrations to event-driven patterns.`
+      });
+    }
+
+    return {
+      metrics: {
+        totalIntegrations: { value: totalIntegrations, change: "+0%", trend: "up" },
+        activeSecurityRisks: {
+          value: securityRisks,
+          change: securityRisks > 5 ? "+High" : "+Low",
+          trend: securityRisks > 5 ? "up" : "stable",
+          badge: securityRisks > 10 ? "Critical" : securityRisks > 5 ? "High" : "Medium"
+        },
+        architectureScore: { value: architectureScore, progress: architectureScore, suffix: "/100" },
+        matchingConfidence: {
+          value: `${Math.round(avgConfidence)}${avgConfidence > 90 ? ' (High)' : avgConfidence > 70 ? ' (Medium)' : ' (Low)'}`,
+          detail: `Neural precision: ${avgConfidence > 90 ? 'high' : avgConfidence > 70 ? 'medium' : 'low'}`,
+          suffix: "%"
+        }
+      },
+      patterns,
+      confidenceIndex,
+      risks,
+      recommendations
+    };
+  };
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -145,18 +313,52 @@ const AIInsights: React.FC = () => {
         setData(jsonData);
       } catch (error) {
         console.error('Error fetching insights:', error);
+        // Fallback to calculated data
+        setData(calculateMetrics(integrations));
       }
     };
 
-    fetchInsights();
-  }, []);
+    // Use calculated data if we have integrations, otherwise fetch from API
+    if (integrations.length > 0) {
+      setData(calculateMetrics(integrations));
+    } else {
+      fetchInsights();
+    }
+  }, [integrations]);
 
   return (
     <div className="space-y-10">
       {/* Header */}
-      <section className="space-y-2">
-        <h1 className="text-3xl font-black tracking-tight text-white">AI Insights</h1>
-        <p className="text-stone-400 font-medium">Automated analysis of architectural patterns and integration risks.</p>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white">AI Insights</h1>
+            <p className="text-stone-400 font-medium">Automated analysis of architectural patterns and integration risks.</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={onNavigateToDashboard}
+              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Dashboard
+            </button>
+            <button
+              onClick={() => onNavigateToSection?.('graph-section')}
+              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <Activity className="w-4 h-4" />
+              Graph View
+            </button>
+            <button
+              onClick={() => onNavigateToSection?.('catalog-section')}
+              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <DatabaseIcon className="w-4 h-4" />
+              Catalog
+            </button>
+          </div>
+        </div>
       </section>
 
       {/* Metrics Grid */}
@@ -275,33 +477,15 @@ const AIInsights: React.FC = () => {
         </div>
       </section>
 
-      {/* AI Optimization */}
-      <section className="bg-amber-950/20 border border-amber-900/30 p-10 rounded-2xl relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row gap-8 items-start">
-          <div className="flex-1 space-y-6">
-            <div className="flex items-center gap-3 text-amber-500">
-              <Lightbulb className="w-6 h-6 fill-current" />
-              <h3 className="text-2xl font-bold">AI Optimization Recommendations</h3>
-            </div>
-            <div className="space-y-4">
-              {data.recommendations.map((rec, index) => (
-                <RecommendationItem 
-                  key={index}
-                  icon={getIcon(rec.icon)} 
-                  title={rec.title} 
-                  desc={rec.desc}
-                />
-              ))}
-            </div>
-          </div>
-          
-          <div className="w-full md:w-72 bg-[#1c1917] p-8 rounded-2xl shadow-2xl border border-stone-800 self-center text-center space-y-6">
-            <span className="text-[10px] text-stone-500 uppercase font-black tracking-[0.2em] block">Potential Impact</span>
-            <div className="text-5xl font-black text-amber-500 tracking-tighter">-1.4s</div>
-            <p className="text-sm text-stone-400 font-medium">Total latency reduction across integration pipelines.</p>
-            <button className="w-full py-4 bg-amber-600 text-white font-black rounded-xl hover:bg-amber-700 transition-all">Apply All</button>
-          </div>
-        </div>
+
+      {/* Modernization Recommendations */}
+      <section className="space-y-6">
+        <RecommendationsPanel />
+      </section>
+
+      {/* Architecture Summary */}
+      <section className="space-y-6">
+        <ArchitectSummaryPanel />
       </section>
     </div>
   );

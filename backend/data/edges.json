@@ -1,6 +1,6 @@
 [
   {
-    "id": "9f9fb1f8-100b-40e7-bb00-e0f8893c5aa9",
+    "id": "8d5d5b8e-0b8f-4514-ae79-8241d7358423",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
@@ -12,7 +12,7 @@
     "color": "blue"
   },
   {
-    "id": "93c3327b-f8f3-4085-a978-864b5b3c0ee5",
+    "id": "2c37a97e-1c3f-4816-9e9c-4879ae73dc93",
     "source": "External Client",
     "target": "Flask App",
     "type": "SYNC_API",
@@ -24,7 +24,7 @@
     "color": "blue"
   },
   {
-    "id": "61b7ce00-3f17-4d88-ba17-f435fd432ffb",
+    "id": "872beb3f-6600-4411-9462-3fe56a3ad4ef",
     "source": "Flask App",
     "target": "Native File IO",
     "type": "FILE",
@@ -36,7 +36,7 @@
     "color": "orange"
   },
   {
-    "id": "c39722b6-c455-48e1-a97b-bb799181ea05",
+    "id": "e3bb928b-b2f3-4359-9764-53ef076b9c54",
     "source": "Flask App",
     "target": "Native File IO",
     "type": "FILE",
@@ -48,7 +48,7 @@
     "color": "orange"
   },
   {
-    "id": "f6afcd41-7269-4d3c-a7dc-914e70b97d79",
+    "id": "3608f15e-8fe1-44ce-93f3-7d1765873bde",
     "source": "Flask App",
     "target": "JSON Data",
     "type": "FILE",
@@ -60,7 +60,7 @@
     "color": "orange"
   },
   {
-    "id": "198ff8af-6415-4bb8-9601-d2f367a7bde9",
+    "id": "aee2ada9-10a1-4413-b3c7-e1a497843526",
     "source": "Flask App",
     "target": "Native File IO",
     "type": "FILE",
@@ -72,7 +72,7 @@
     "color": "orange"
   },
   {
-    "id": "b3ff867e-fdda-434e-963c-e17269c0977d",
+    "id": "dcbbe07b-0729-49a0-8836-20bcab15d0e0",
     "source": "Flask App",
     "target": "Native File IO",
     "type": "FILE",
@@ -84,7 +84,7 @@
     "color": "orange"
   },
   {
-    "id": "c823de81-46de-4e63-b5aa-4536d60679c1",
+    "id": "ce278b06-6cb3-42d0-8100-a9f4090eeb0a",
     "source": "Flask App",
     "target": "Native File IO",
     "type": "FILE",

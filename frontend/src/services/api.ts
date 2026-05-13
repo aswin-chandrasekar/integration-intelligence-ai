@@ -48,3 +48,17 @@ export const getRiskAnalysis = async () => {
 
   return res.json();
 };
+
+export const exportMermaid = async (system?: string) => {
+
+  const url = system
+    ? `/api/export/mermaid?system=${encodeURIComponent(system)}`
+    : `/api/export/mermaid`;
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to export Mermaid diagram");
+  }
+
+  return response.json();
+};
