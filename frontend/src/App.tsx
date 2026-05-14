@@ -10,6 +10,7 @@ import { TopNav, Sidebar } from './components/Navigation';
 import ScanPanel from './components/ScanPanel';
 import ResultsTable from './components/ResultsTable';
 import AIInsights from './components/AIInsights';
+import HelpCentre from './components/HelpCentre';
 import {getIntegrations,Integration,exportMermaid} from './services/api';
 import GraphView from "./components/GraphView.tsx";
 
@@ -17,7 +18,7 @@ export default function App() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] =
-    useState<'dashboard' | 'insights'>('dashboard');
+    useState<'dashboard' | 'insights' | 'help'>('dashboard');
   const [activeSection, setActiveSection] = useState<string>('scan-section');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
@@ -77,9 +78,9 @@ export default function App() {
     }
   };
 
-  const handleViewChange = (view: 'dashboard' | 'insights') => {
+  const handleViewChange = (view: 'dashboard' | 'insights' | 'help') => {
     setCurrentView(view);
-    if (view === 'insights') {
+    if (view === 'insights' || view === 'help') {
       setActiveSection('');
     } else {
       setActiveSection('scan-section');
@@ -287,7 +288,7 @@ export default function App() {
                 </div>
               </div>
             </div>
-          ) : (
+          ) : currentView === 'insights' ? (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -298,6 +299,14 @@ export default function App() {
                 onNavigateToSection={handleSectionClick}
                 integrations={integrations}
               />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <HelpCentre />
             </motion.div>
           )}
         </div>

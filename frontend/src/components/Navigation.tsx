@@ -64,9 +64,9 @@ export const TopNav: React.FC<TopNavProps> = ({ theme, toggleTheme }) => {
 };
 
 interface SidebarProps {
-  currentView: 'dashboard' | 'insights';
+  currentView: 'dashboard' | 'insights' | 'help';
   activeSection: string;
-  onViewChange: (view: 'dashboard' | 'insights') => void;
+  onViewChange: (view: 'dashboard' | 'insights' | 'help') => void;
   onSectionClick: (id: string) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
@@ -142,6 +142,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           label="AI Insights" 
           active={currentView === 'insights'}
           onClick={() => onViewChange('insights')}
+          isCollapsed={isCollapsed}
+        />
+        <NavItem 
+          icon={<HelpCircle />} 
+          label="Help Centre" 
+          active={currentView === 'help'}
+          onClick={() => onViewChange('help')}
           isCollapsed={isCollapsed}
         />
       </nav>
