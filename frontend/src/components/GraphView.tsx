@@ -9,13 +9,28 @@ import ReactFlow, {
   Panel,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Integration, getRiskAnalysis} from "../services/api";
+import { Integration, getRiskAnalysis } from "../services/api";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface GraphViewProps {
   data?: Integration[];
   onSelectedSystemChange?: (system: string | null) => void;
 }
+
+const getRiskColor = (risk: string) => {
+  switch (risk) {
+    case "CRITICAL":
+      return "#ef4444";
+    case "HIGH":
+      return "#f97316";
+    case "MEDIUM":
+      return "#eab308";
+    case "LOW":
+      return "#22c55e";
+    default:
+      return "#a8a29e";
+  }
+};
 
 const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -42,6 +57,15 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
     }
   };
 
+  const getRiskLevel = (systemName: string) => {
+    const match = riskData.find(
+      (r) =>
+        r.system.toLowerCase() ===
+        systemName.toLowerCase()
+    );
+    return match?.riskLevel || "LOW";
+  };
+
   const updateGraph = useCallback(
     async (integrations: Integration[]) => {
       if (!integrations || integrations.length === 0) {
@@ -60,15 +84,7 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
         items: Integration[];
       }>();
 
-      const getPos = (id: string) => {
-        if (!nodePositions.current.has(id)) {
-          nodePositions.current.set(id, {
-            x: Math.random() * 800,
-            y: Math.random() * 500,
-          });
-        }
-        return nodePositions.current.get(id)!;
-      };
+      // Coordinates will be computed dynamically below via Layered BFS Layout
 
       integrations.forEach((item) => {
         const sourceId = item.source.toLowerCase().replace(/\s+/g, "-");
@@ -77,72 +93,76 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
 
         // 1. Manage Nodes
         if (!nodesMap.has(sourceId)) {
-  const sourceRisk = getRiskLevel(item.source);
-  nodesMap.set(sourceId, {
-    id: sourceId,
-    data: { label: item.source },
-    position: getPos(sourceId),
-    style: {
-      background:
-        selectedNode === sourceId
-          ? "#ffffff"
-          : getRiskColor(sourceRisk),
-      color:
-        sourceRisk === "MEDIUM"
-          ? "#000"
-          : "#fff",
-      border:
-        selectedNode === sourceId
-          ? "4px solid #fff"
-          : `2px solid ${getRiskColor(sourceRisk)}`,
-      borderRadius: "10px",
-      padding: "10px",
-      width: 170,
-      fontWeight: "bold",
-      fontSize: "12px",
-      boxShadow:
-        sourceRisk === "CRITICAL"
-          ? "0 0 25px rgba(239,68,68,0.7)"
-          : sourceRisk === "HIGH"
-          ? "0 0 20px rgba(249,115,22,0.5)"
-          : "none",
-    },
-  });
-}
+          const sourceRisk = getRiskLevel(item.source);
+          nodesMap.set(sourceId, {
+            id: sourceId,
+            data: { label: item.source },
+            position: { x: 0, y: 0 }, // Positioned by layout engine below
+            style: {
+              background:
+                selectedNode === sourceId
+                  ? "var(--app-brand)"
+                  : getRiskColor(sourceRisk),
+              color:
+                selectedNode === sourceId
+                  ? "#ffffff"
+                  : sourceRisk === "MEDIUM"
+                    ? "#000000"
+                    : "#ffffff",
+              border:
+                selectedNode === sourceId
+                  ? "3px solid var(--app-text)"
+                  : `2px solid ${getRiskColor(sourceRisk)}`,
+              borderRadius: "10px",
+              padding: "10px",
+              width: 170,
+              fontWeight: "bold",
+              fontSize: "12px",
+              boxShadow:
+                sourceRisk === "CRITICAL"
+                  ? "0 0 25px rgba(239,68,68,0.7)"
+                  : sourceRisk === "HIGH"
+                    ? "0 0 20px rgba(249,115,22,0.5)"
+                    : "none",
+            },
+          });
+        }
 
-if (!nodesMap.has(targetId)) {
-  const targetRisk = getRiskLevel(item.target);
-  nodesMap.set(targetId, {
-    id: targetId,
-    data: { label: item.target },
-    position: getPos(targetId),
-    style: {
-      background:
-        selectedNode === targetId
-          ? "#fca32eff"
-          : getRiskColor(targetRisk),
-      color:
-        targetRisk === "MEDIUM"
-          ? "#000"
-          : "#fff",
-      border:
-        selectedNode === targetId
-          ? "4px solid #fff"
-          : `2px solid ${getRiskColor(targetRisk)}`,
-      borderRadius: "10px",
-      padding: "10px",
-      width: 170,
-      fontWeight: "bold",
-      fontSize: "12px",
-      boxShadow:
-        targetRisk === "CRITICAL"
-          ? "0 0 25px rgba(239,68,68,0.7)"
-          : targetRisk === "HIGH"
-          ? "0 0 20px rgba(249,115,22,0.5)"
-          : "none",
-    },
-  });
-}
+        if (!nodesMap.has(targetId)) {
+          const targetRisk = getRiskLevel(item.target);
+          nodesMap.set(targetId, {
+            id: targetId,
+            data: { label: item.target },
+            position: { x: 0, y: 0 }, // Positioned by layout engine below
+            style: {
+              background:
+                selectedNode === targetId
+                  ? "var(--app-brand)"
+                  : getRiskColor(targetRisk),
+              color:
+                selectedNode === targetId
+                  ? "#ffffff"
+                  : targetRisk === "MEDIUM"
+                    ? "#000000"
+                    : "#ffffff",
+              border:
+                selectedNode === targetId
+                  ? "3px solid var(--app-text)"
+                  : `2px solid ${getRiskColor(targetRisk)}`,
+              borderRadius: "10px",
+              padding: "10px",
+              width: 170,
+              fontWeight: "bold",
+              fontSize: "12px",
+              boxShadow:
+                targetRisk === "CRITICAL"
+                  ? "0 0 25px rgba(239,68,68,0.7)"
+                  : targetRisk === "HIGH"
+                    ? "0 0 20px rgba(249,115,22,0.5)"
+                    : "none",
+            },
+          });
+        }
 
         // 2. Group Edges
         if (!groupedEdges.has(edgeKey)) {
@@ -181,6 +201,89 @@ if (!nodesMap.has(targetId)) {
         };
       });
 
+      // ==========================================
+      // 3. LAYERED LAYOUT ENGINE (BFS RANKING)
+      // ==========================================
+      const nodeIds = Array.from(nodesMap.keys());
+      const inDegree = new Map<string, number>();
+      const adjList = new Map<string, string[]>();
+
+      nodeIds.forEach(id => {
+        inDegree.set(id, 0);
+        adjList.set(id, []);
+      });
+
+      groupedEdges.forEach(edge => {
+        const src = edge.source;
+        const tgt = edge.target;
+        if (adjList.has(src)) adjList.get(src)!.push(tgt);
+        if (inDegree.has(tgt)) inDegree.set(tgt, inDegree.get(tgt)! + 1);
+      });
+
+      const ranks = new Map<string, number>();
+      let queue: string[] = [];
+
+      // Start BFS with roots (0 in-degree nodes)
+      nodeIds.forEach(id => {
+        if (inDegree.get(id) === 0) {
+          ranks.set(id, 0);
+          queue.push(id);
+        }
+      });
+
+      // Fallback for fully cyclical or zero-in-degree-less graphs
+      if (queue.length === 0 && nodeIds.length > 0) {
+        ranks.set(nodeIds[0], 0);
+        queue.push(nodeIds[0]);
+      }
+
+      const visited = new Set<string>();
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        if (visited.has(current)) continue;
+        visited.add(current);
+
+        const currentRank = ranks.get(current) || 0;
+        const neighbors = adjList.get(current) || [];
+
+        neighbors.forEach(neighbor => {
+          const nextRank = Math.max(ranks.get(neighbor) || 0, currentRank + 1);
+          ranks.set(neighbor, nextRank);
+          if (!visited.has(neighbor)) {
+            queue.push(neighbor);
+          }
+        });
+      }
+
+      // Ensure every node gets placed in a rank
+      nodeIds.forEach(id => {
+        if (!ranks.has(id)) ranks.set(id, 0);
+      });
+
+      // Group nodes by calculated ranks for precise Y coordinate distribution
+      const nodesByRank = new Map<number, string[]>();
+      ranks.forEach((rank, nodeId) => {
+        if (!nodesByRank.has(rank)) nodesByRank.set(rank, []);
+        nodesByRank.get(rank)!.push(nodeId);
+      });
+
+      // Compute clean, non-overlapping spacing
+      const columnWidth = 260;
+      const rowHeight = 130;
+
+      nodesByRank.forEach((nodesInRank, rank) => {
+        nodesInRank.forEach((nodeId, index) => {
+          const node = nodesMap.get(nodeId);
+          if (node) {
+            node.position = {
+              x: rank * columnWidth + 50,
+              // Centered distribution vertically to look organized
+              y: (index - (nodesInRank.length - 1) / 2) * rowHeight + 350,
+            };
+          }
+        });
+      });
+
       let highlightedNodes = new Set<string>();
       let highlightedEdgeKeys = new Set<string>();
       if (selectedNode) {
@@ -208,7 +311,7 @@ if (!nodesMap.has(targetId)) {
       setEdges(
         flowEdges.map((edge) => {
           let isHighlighted = !selectedNode || highlightedEdgeKeys.has(`${edge.source}_${edge.target}`);
-          
+
           // Enforce direction locally to overcome any backend proxy defaults
           if (selectedNode && isHighlighted && direction !== "both") {
             if (direction === "downstream" && !highlightedNodes.has(edge.source)) isHighlighted = false;
@@ -226,53 +329,22 @@ if (!nodesMap.has(targetId)) {
         })
       );
     },
-    [setNodes, setEdges, selectedNode, depth, direction]
+    [setNodes, setEdges, selectedNode, depth, direction, riskData]
   );
 
   useEffect(() => {
 
-  getRiskAnalysis()
-    .then((data) => {
-      console.log("Risk Analysis:", data);
-      setRiskData(data);
-    })
-    .catch((err) => {
-      console.error("Risk analysis failed:", err);
-    });
+    getRiskAnalysis()
+      .then((data) => {
+        console.log("Risk Analysis:", data);
+        setRiskData(data);
+      })
+      .catch((err) => {
+        console.error("Risk analysis failed:", err);
+      });
 
-}, []);
+  }, []);
 
-const getRiskLevel = (systemName: string) => {
-
-  const match = riskData.find(
-    (r) =>
-      r.system.toLowerCase() ===
-      systemName.toLowerCase()
-  );
-
-  return match?.riskLevel || "LOW";
-};
-
-const getRiskColor = (risk: string) => {
-
-  switch (risk) {
-
-    case "CRITICAL":
-      return "#ef4444";
-
-    case "HIGH":
-      return "#f97316";
-
-    case "MEDIUM":
-      return "#eab308";
-
-    case "LOW":
-      return "#22c55e";
-
-    default:
-      return "#a8a29e";
-  }
-};
 
   useEffect(() => {
     updateGraph(data);
@@ -283,7 +355,7 @@ const getRiskColor = (risk: string) => {
   }, [selectedNode, onSelectedSystemChange]);
 
   return (
-    <div style={{ height: "100%", minHeight: "500px", width: "100%" }}>
+    <div style={{ height: "100%", minHeight: "600px", width: "100%" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -293,27 +365,27 @@ const getRiskColor = (risk: string) => {
         onPaneClick={() => setSelectedNode(null)}
         onEdgeClick={(event, edge) => setSelectedEdge(edge)}
         fitView
-        style={{ background: "#0c0a09" }}
+        style={{ background: "var(--app-bg)", transition: "background-color 0.2s ease" }}
       >
-        <Background color="#292524" gap={20} />
+        <Background color="var(--app-border)" gap={20} />
         <Controls />
 
         {/* Blast Radius Controls + Legend */}
         <Panel position="top-left">
           <div style={{
-            background: "#1c1917",
+            background: "var(--app-surface)",
             padding: "12px",
             borderRadius: "8px",
-            border: "1px solid #444",
-            color: "white",
+            border: "1px solid var(--app-border)",
+            color: "var(--app-text)",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
             width: "280px"
           }}>
             <div>
-              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--app-text)", marginBottom: "4px" }}>
                 Direction
               </p>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -329,9 +401,9 @@ const getRiskColor = (risk: string) => {
                       padding: "3px 6px",
                       fontSize: "11px",
                       fontWeight: "bold",
-                      background: direction === dir.val ? "#d97706" : "#262626",
-                      color: direction === dir.val ? "white" : "#aaa",
-                      border: "1px solid #333",
+                      background: direction === dir.val ? "var(--app-brand)" : "var(--app-bg)",
+                      color: direction === dir.val ? "white" : "var(--app-text-muted)",
+                      border: "1px solid var(--app-border)",
                       borderRadius: "4px",
                       cursor: "pointer"
                     }}
@@ -343,7 +415,7 @@ const getRiskColor = (risk: string) => {
             </div>
 
             <div>
-              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px" }}>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--app-text)", marginBottom: "4px" }}>
                 Depth
               </p>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -355,9 +427,9 @@ const getRiskColor = (risk: string) => {
                       padding: "3px 8px",
                       fontSize: "11px",
                       fontWeight: "bold",
-                      background: depth === d ? "#d97706" : "#262626",
-                      color: depth === d ? "white" : "#aaa",
-                      border: "1px solid #333",
+                      background: depth === d ? "var(--app-brand)" : "var(--app-bg)",
+                      color: depth === d ? "white" : "var(--app-text-muted)",
+                      border: "1px solid var(--app-border)",
                       borderRadius: "4px",
                       cursor: "pointer",
                       minWidth: "24px"
@@ -370,8 +442,8 @@ const getRiskColor = (risk: string) => {
             </div>
 
             {/* Legend */}
-            <div style={{ borderTop: "1px solid #333", paddingTop: "8px" }}>
-              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
+            <div style={{ borderTop: "1px solid var(--app-border)", paddingTop: "8px" }}>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--app-text)", marginBottom: "4px" }}>
                 Risk Levels
               </p>
               <div style={{ display: "flex", gap: "8px", fontSize: "10px", marginBottom: "6px" }}>
@@ -383,7 +455,7 @@ const getRiskColor = (risk: string) => {
                 <div style={{ color: "#22c55e" }}>🟢 LOW</div>
               </div>
 
-              <p style={{  fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "#ffffffff", marginBottom: "4px"  }}>
+              <p style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", color: "var(--app-text)", marginBottom: "4px" }}>
                 Integration Types
               </p>
               <div style={{ display: "flex", gap: "8px", fontSize: "10px", marginBottom: "4px" }}>
@@ -399,16 +471,16 @@ const getRiskColor = (risk: string) => {
         </Panel>
 
         {/* System Count & Architecture Risk Ranking */}
-        <Panel position="top-right">
+        <Panel position="top-left" style={{ marginTop: "290px" }}>
           <div
             style={{
-              background: "#1c1917",
+              background: "var(--app-surface)",
               padding: "12px",
               borderRadius: "10px",
-              border: "1px solid #444",
+              border: "1px solid var(--app-border)",
               width: "280px",
-              color: "white",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
+              color: "var(--app-text)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)"
             }}
           >
             {/* System Count Header */}
@@ -417,10 +489,10 @@ const getRiskColor = (risk: string) => {
                 fontSize: "12px",
                 fontWeight: "bold",
                 textTransform: "uppercase",
-                color: "#888",
+                color: "var(--app-text-muted)",
                 marginBottom: "12px",
                 paddingBottom: "8px",
-                borderBottom: "1px solid #333"
+                borderBottom: "1px solid var(--app-border)"
               }}
             >
               📊 {nodes.length} Systems Detected
@@ -438,7 +510,7 @@ const getRiskColor = (risk: string) => {
                   padding: "8px 0",
                   background: "none",
                   border: "none",
-                  color: "white",
+                  color: "var(--app-text)",
                   cursor: "pointer",
                   fontWeight: "bold",
                   fontSize: "12px",
@@ -452,7 +524,7 @@ const getRiskColor = (risk: string) => {
               {!riskPanelCollapsed && (
                 <div
                   style={{
-                    maxHeight: "320px",
+                    maxHeight: "190px",
                     overflowY: "auto",
                     marginTop: "8px",
                   }}
@@ -464,7 +536,8 @@ const getRiskColor = (risk: string) => {
                         marginBottom: "10px",
                         padding: "8px",
                         borderRadius: "6px",
-                        background: "#262626",
+                        background: "var(--app-bg)",
+                        border: "1px solid var(--app-border)",
                         borderLeft: `5px solid ${getRiskColor(
                           risk.riskLevel
                         )}`,
@@ -500,7 +573,7 @@ const getRiskColor = (risk: string) => {
                         style={{
                           marginTop: "6px",
                           fontSize: "11px",
-                          color: "#aaa",
+                          color: "var(--app-text-muted)",
                         }}
                       >
                         Risk Score: {risk.riskScore}
@@ -509,7 +582,8 @@ const getRiskColor = (risk: string) => {
                       <div
                         style={{
                           fontSize: "11px",
-                          color: "#777",
+                          color: "var(--app-text-muted)",
+                          opacity: 0.7
                         }}
                       >
                         Fan-Out: {risk.fanOut} | Sync Depth: {risk.syncDepth}
@@ -526,26 +600,27 @@ const getRiskColor = (risk: string) => {
         {selectedEdge && (
           <Panel position="bottom-right">
             <div style={{
-              background: "#1c1917",
+              background: "var(--app-surface)",
               padding: "16px",
-              border: "1px solid #444",
+              border: "1px solid var(--app-border)",
               borderRadius: "8px",
               maxHeight: "300px",
               overflowY: "auto",
+              color: "var(--app-text)",
               width: "280px"
             }}>
-              <p style={{ fontWeight: "bold", borderBottom: "1px solid #333", paddingBottom: "8px", marginBottom: "12px" }}>
+              <p style={{ fontWeight: "bold", borderBottom: "1px solid var(--app-border)", paddingBottom: "8px", marginBottom: "12px" }}>
                 Integrations ({selectedEdge.data?.integrations?.length || 0})
               </p>
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {selectedEdge.data?.integrations?.map((int: Integration, i: number) => (
-                  <div key={i} style={{ fontSize: "12px", background: "#262626", padding: "8px", borderRadius: "4px" }}>
+                  <div key={i} style={{ fontSize: "12px", background: "var(--app-bg)", border: "1px solid var(--app-border)", padding: "8px", borderRadius: "4px" }}>
                     <p style={{ color: "#f97316", fontWeight: "bold" }}>{int.type}</p>
-                    <p style={{ color: "#aaa", marginTop: "4px" }}>
+                    <p style={{ color: "var(--app-text-muted)", marginTop: "4px" }}>
                       <b>File:</b> {int.file?.split('/').pop()}
                     </p>
-                    <p style={{ color: "#aaa" }}>
+                    <p style={{ color: "var(--app-text-muted)" }}>
                       <b>Line:</b> {int.line}
                     </p>
                   </div>
@@ -558,7 +633,7 @@ const getRiskColor = (risk: string) => {
                   marginTop: "16px",
                   width: "100%",
                   padding: "6px",
-                  background: "#d97706",
+                  background: "var(--app-brand)",
                   border: "none",
                   borderRadius: "4px",
                   color: "white",

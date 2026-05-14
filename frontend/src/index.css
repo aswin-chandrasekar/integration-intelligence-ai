@@ -3,19 +3,48 @@
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #d97706; /* Amber 600 */
-  --color-background: #0c0a09; /* Stone 950 */
-  --color-surface: #1c1917; /* Stone 900 */
-  --color-surface-hover: #292524; /* Stone 800 */
+  --color-app-bg: var(--app-bg);
+  --color-app-surface: var(--app-surface);
+  --color-app-surface-hover: var(--app-surface-hover);
+  --color-app-border: var(--app-border);
+  --color-app-text: var(--app-text);
+  --color-app-text-muted: var(--app-text-muted);
+  --color-app-brand: var(--app-brand);
+  --color-app-brand-hover: var(--app-brand-hover);
+}
+
+:root {
+  /* Default: Dark Mode */
+  --app-bg: #0c0a09;
+  --app-surface: #1c1917;
+  --app-surface-hover: #292524;
+  --app-border: #292524;
+  --app-text: #f5f5f4;
+  --app-text-muted: #78716c;
+  --app-brand: #d97706;
+  --app-brand-hover: #b45309;
+}
+
+:root.light {
+  /* Bright Mode (White, Black, Blue) */
+  --app-bg: #f8fafc; /* Slate 50 */
+  --app-surface: #ffffff; /* Pure White */
+  --app-surface-hover: #f1f5f9; /* Slate 100 */
+  --app-border: #e2e8f0; /* Slate 200 */
+  --app-text: #0f172a; /* Slate 900 */
+  --app-text-muted: #64748b; /* Slate 500 */
+  --app-brand: #2563eb; /* Blue 600 */
+  --app-brand-hover: #1d4ed8; /* Blue 700 */
 }
 
 body {
-  background-color: var(--color-background);
-  color: #f5f5f4; /* Stone 100 */
+  background-color: var(--app-bg);
+  color: var(--app-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 * {
-  @apply border-stone-800;
+  border-color: var(--app-border);
 }

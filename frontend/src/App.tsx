@@ -18,11 +18,29 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] =
     useState<'dashboard' | 'insights'>('dashboard');
+  const [activeSection, setActiveSection] = useState<string>('scan-section');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
     message: string;
     type: 'success' | 'error';
   } | null>(null);
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('theme') as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
 
   const fetchIntegrations = async () => {
     try {
@@ -39,11 +57,32 @@ export default function App() {
     fetchIntegrations();
   }, []);
   const handleSectionClick = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth'
-      });
+    setActiveSection(sectionId);
+    if (currentView !== 'dashboard') {
+      setCurrentView('dashboard');
+      // Wait brief instant for dashboard DOM to mount before scrolling
+      setTimeout(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+
+  const handleViewChange = (view: 'dashboard' | 'insights') => {
+    setCurrentView(view);
+    if (view === 'insights') {
+      setActiveSection('');
+    } else {
+      setActiveSection('scan-section');
     }
   };
 
@@ -116,33 +155,36 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="min-h-screen bg-[#0c0a09]">
-      <TopNav />
+    <div className="min-h-screen bg-app-bg text-app-text transition-colors">
+      <TopNav theme={theme} toggleTheme={toggleTheme} />
       <Sidebar
         currentView={currentView}
-        onViewChange={setCurrentView}
+        activeSection={activeSection}
+        onViewChange={handleViewChange}
         onSectionClick={handleSectionClick}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
       />
       {notification && (
         <div className={`fixed right-6 top-24 z-50 rounded-2xl px-4 py-3 shadow-xl ${notification.type === 'success' ? 'bg-emerald-500 text-black' : 'bg-rose-500 text-white'}`}>
           {notification.message}
         </div>
       )}
-      <main className="lg:ml-72 p-8 min-h-[calc(100vh-64px)] overflow-y-auto">
+      <main className={`transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'} p-8 min-h-[calc(100vh-64px)] overflow-y-auto`}>
         <div className="max-w-7xl mx-auto">
           {currentView === 'dashboard' ? (
             <div className="space-y-12">
               {/* Header */}
               <header className="flex justify-between items-end">
                 <div>
-                  <h1 className="text-3xl font-black tracking-tight text-white">
+                  <h1 className="text-3xl font-black tracking-tight text-app-text">
                     Intelligence Dashboard
                   </h1>
-                  <p className="text-stone-500 mt-1 font-medium">
+                  <p className="text-app-text-muted mt-1 font-medium">
                     Analysis overview for central-api-gateway repository
                   </p>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-stone-900 text-emerald-500 text-sm font-bold rounded-full border border-stone-800">
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-app-surface-hover text-emerald-500 text-sm font-bold rounded-full border border-app-border">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   System Online
                 </div>
@@ -165,20 +207,20 @@ export default function App() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
-                    className="h-full bg-[#1c1917] border border-stone-800 rounded-xl p-8 flex flex-col justify-between shadow-sm relative overflow-hidden"
+                    className="h-full bg-app-surface border border-app-border rounded-xl p-8 flex flex-col justify-between shadow-sm relative overflow-hidden transition-colors"
                   >
                     <div>
                       <div className="flex items-center gap-3 mb-4">
-                        <Activity className="text-[#d97706] w-5 h-5" />
-                        <h2 className="text-xl font-bold text-white">
+                        <Activity className="text-app-brand w-5 h-5" />
+                        <h2 className="text-xl font-bold text-app-text">
                           Graph View
                         </h2>
                       </div>
-                      <p className="text-sm text-stone-500 font-medium">
+                      <p className="text-sm text-app-text-muted font-medium">
                         Visualize system dependencies and data flow across services.
                       </p>
                     </div>
-                    <div className="mt-8 flex-1 w-full border border-stone-800 rounded-xl bg-stone-900 overflow-hidden">
+                    <div className="mt-8 flex-1 w-full border border-app-border rounded-xl bg-app-bg overflow-hidden min-h-[400px]">
                       <GraphView
                         data={integrations}
                         onSelectedSystemChange={setSelectedSystem}
@@ -202,17 +244,17 @@ export default function App() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: 0.3 }}
-                    className="bg-[#1c1917] border border-stone-800 rounded-xl p-8 flex flex-col md:flex-row items-center justify-between shadow-sm"
+                    className="bg-app-surface border border-app-border rounded-xl p-8 flex flex-col md:flex-row items-center justify-between shadow-sm transition-colors"
                   >
                     <div className="flex items-center gap-4 mb-4 md:mb-0">
-                      <div className="p-3 bg-stone-900 text-[#d97706] rounded-xl">
+                      <div className="p-3 bg-app-bg text-app-brand rounded-xl transition-colors">
                         <Download className="w-6 h-6" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-bold text-white">
+                        <h2 className="text-xl font-bold text-app-text">
                           Data Exports
                         </h2>
-                        <p className="text-sm text-stone-500 font-medium">
+                        <p className="text-sm text-app-text-muted font-medium">
                           Download discovered integration metadata in various formats.
                         </p>
                       </div>
@@ -221,21 +263,21 @@ export default function App() {
                     <div className="flex gap-4 flex-wrap w-full md:w-auto">
                       <button
                         onClick={handleCsvExport}
-                        className="flex items-center justify-center gap-2 px-6 py-3 border border-stone-700 rounded-xl text-white font-bold text-sm bg-stone-900 hover:bg-stone-800 transition-all"
+                        className="flex items-center justify-center gap-2 px-6 py-3 border border-app-border rounded-xl text-app-text font-bold text-sm bg-app-bg hover:bg-app-surface-hover transition-all cursor-pointer"
                       >
                         <FileSpreadsheet className="w-4 h-4" />
                         Export CSV
                       </button>
                       <button
                         onClick={handleJsonExport}
-                        className="flex items-center justify-center gap-2 px-6 py-3 border border-stone-700 rounded-xl text-white font-bold text-sm bg-stone-900 hover:bg-stone-800 transition-all"
+                        className="flex items-center justify-center gap-2 px-6 py-3 border border-app-border rounded-xl text-app-text font-bold text-sm bg-app-bg hover:bg-app-surface-hover transition-all cursor-pointer"
                       >
                         <FileJson className="w-4 h-4" />
                         Export JSON
                       </button>
                       <button
                         onClick={handleMermaidExport}
-                        className="flex items-center justify-center gap-2 px-6 py-3 border border-amber-700 rounded-xl text-white font-bold text-sm bg-amber-700 hover:bg-amber-600 transition-all"
+                        className="flex items-center justify-center gap-2 px-6 py-3 border border-app-brand rounded-xl text-white font-bold text-sm bg-app-brand hover:bg-app-brand-hover transition-all cursor-pointer"
                       >
                         <Download className="w-4 h-4" />
                         Export Mermaid

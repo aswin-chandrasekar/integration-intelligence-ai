@@ -44,28 +44,28 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onScanComplete }) => {
 
   const getStatusColor = () => {
     switch (status) {
-      case 'Scanning': return 'bg-secondary-fixed animate-pulse';
+      case 'Scanning': return 'bg-app-brand animate-pulse';
       case 'Completed': return 'bg-emerald-500';
-      case 'Error': return 'bg-error';
-      default: return 'bg-gray-300';
+      case 'Error': return 'bg-rose-500';
+      default: return 'bg-gray-400';
     }
   };
 
   return (
-    <section className="bg-[#1c1917] border border-stone-800 rounded-xl p-8 space-y-8 shadow-sm">
+    <section className="bg-app-surface border border-app-border rounded-xl p-8 space-y-8 shadow-sm transition-colors">
       <div className="flex items-center gap-3">
-        <Search className="text-[#d97706] w-6 h-6" />
-        <h2 className="text-2xl font-bold text-white">Repository Scan</h2>
+        <Search className="text-app-brand w-6 h-6" />
+        <h2 className="text-2xl font-bold text-app-text">Repository Scan</h2>
       </div>
       
       <div className="space-y-6">
         <div className="space-y-2">
-          <label className="text-[10px] uppercase font-black text-stone-500 tracking-widest">Repo Path / Repo URL</label>
+          <label className="text-[10px] uppercase font-black text-app-text-muted tracking-widest">Repo Path / Repo URL</label>
           <input 
             type="text" 
             value={repoPath}
             onChange={(e) => setRepoPath(e.target.value)}
-            className="w-full border border-stone-800 rounded-xl focus:ring-[#d97706] focus:border-[#d97706] text-sm px-5 py-3.5 bg-stone-950 text-stone-200 placeholder:text-stone-700 transition-all"
+            className="w-full border border-app-border rounded-xl focus:ring-app-brand focus:border-app-brand text-sm px-5 py-3.5 bg-app-bg text-app-text placeholder:text-app-text-muted transition-all outline-none"
             placeholder="https://github.com/org/central-api-gateway"
           />
         </div>
@@ -74,15 +74,15 @@ const ScanPanel: React.FC<ScanPanelProps> = ({ onScanComplete }) => {
           <button 
             onClick={handleScan}
             disabled={loading || status === 'Scanning'}
-            className="bg-[#d97706] text-white px-10 py-3.5 rounded-xl font-bold text-sm hover:bg-amber-700 transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-900/20 active:scale-95"
+            className="bg-app-brand text-white px-10 py-3.5 rounded-xl font-bold text-sm hover:bg-app-brand-hover transition-all flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-app-brand/20 active:scale-95 cursor-pointer"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-4 h-4 fill-current" />}
             Run Scan
           </button>
           
-          <div className="flex items-center gap-4 px-5 py-3.5 bg-stone-900 rounded-xl border border-stone-800 flex-1">
+          <div className="flex items-center gap-4 px-5 py-3.5 bg-app-surface-hover rounded-xl border border-app-border flex-1 transition-colors">
             <span className={`w-2.5 h-2.5 rounded-full ${getStatusColor()}`}></span>
-            <span className="text-sm text-stone-400 font-medium">Status: <span className="text-white font-black">{status}</span></span>
+            <span className="text-sm text-app-text-muted font-medium">Status: <span className="text-app-text font-black">{status}</span></span>
           </div>
         </div>
       </div>

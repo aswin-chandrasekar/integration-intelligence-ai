@@ -150,7 +150,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
   const [data, setData] = useState<InsightsData>(defaultData);
 
   // Calculate metrics based on integrations data
-  const calculateMetrics = (integrations: any[]) => {
+  const calculateMetrics = (integrations: any[]): InsightsData => {
     const totalIntegrations = integrations.length;
 
     // Calculate architecture score based on integration patterns
@@ -293,7 +293,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
         },
         architectureScore: { value: architectureScore, progress: architectureScore, suffix: "/100" },
         matchingConfidence: {
-          value: `${Math.round(avgConfidence)}${avgConfidence > 90 ? ' (High)' : avgConfidence > 70 ? ' (Medium)' : ' (Low)'}`,
+          value: Math.round(avgConfidence),
           detail: `Neural precision: ${avgConfidence > 90 ? 'high' : avgConfidence > 70 ? 'medium' : 'low'}`,
           suffix: "%"
         }
@@ -332,31 +332,8 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-black tracking-tight text-white">AI Insights</h1>
-            <p className="text-stone-400 font-medium">Automated analysis of architectural patterns and integration risks.</p>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={onNavigateToDashboard}
-              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Dashboard
-            </button>
-            <button
-              onClick={() => onNavigateToSection?.('graph-section')}
-              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <Activity className="w-4 h-4" />
-              Graph View
-            </button>
-            <button
-              onClick={() => onNavigateToSection?.('catalog-section')}
-              className="flex items-center gap-2 px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <DatabaseIcon className="w-4 h-4" />
-              Catalog
-            </button>
+            <h1 className="text-3xl font-black tracking-tight text-app-text">AI Insights</h1>
+            <p className="text-app-text-muted font-medium">Automated analysis of architectural patterns and integration risks.</p>
           </div>
         </div>
       </section>
@@ -368,7 +345,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
           value={data.metrics.totalIntegrations.value.toString()} 
           change={data.metrics.totalIntegrations.change} 
           trend={data.metrics.totalIntegrations.trend} 
-          icon={<Network className="text-amber-500" />} 
+          icon={<Network className="text-app-brand" />} 
         />
         <MetricCard 
           title="Active Security Risks" 
@@ -376,14 +353,14 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
           change={data.metrics.activeSecurityRisks.change} 
           trend={data.metrics.activeSecurityRisks.trend} 
           badge={data.metrics.activeSecurityRisks.badge} 
-          icon={<ShieldAlert className="text-orange-500" />} 
+          icon={<ShieldAlert className="text-rose-500" />} 
         />
         <MetricCard 
           title="Architecture Score" 
           value={data.metrics.architectureScore.value.toString()} 
           suffix={data.metrics.architectureScore.suffix} 
           progress={data.metrics.architectureScore.progress} 
-          icon={<Component className="text-stone-400" />} 
+          icon={<Component className="text-app-text-muted" />} 
         />
         <MetricCard 
           title="Matching Confidence" 
@@ -397,8 +374,8 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
         {/* Architectural Patterns */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-white">Architectural Patterns</h2>
-            <button className="text-amber-500 font-bold text-sm hover:underline">View all maps</button>
+            <h2 className="text-2xl font-bold text-app-text">Architectural Patterns</h2>
+            <button className="text-app-brand font-bold text-sm hover:underline cursor-pointer">View all maps</button>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -420,14 +397,14 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
 
         {/* Confidence Index */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-white">Confidence Index</h2>
-          <div className="bg-[#1c1917] border border-stone-800 p-8 rounded-xl space-y-8">
+          <h2 className="text-2xl font-bold text-app-text">Confidence Index</h2>
+          <div className="bg-app-surface border border-app-border p-8 rounded-xl space-y-8 transition-colors">
             <div className="flex flex-col items-center justify-center py-6 relative">
-              <div className="w-40 h-40 rounded-full border-8 border-stone-900 flex items-center justify-center relative">
-                <div className="absolute inset-0 rounded-full border-8 border-amber-600 border-t-transparent border-r-transparent transform -rotate-12"></div>
+              <div className="w-40 h-40 rounded-full border-8 border-app-bg flex items-center justify-center relative">
+                <div className="absolute inset-0 rounded-full border-8 border-app-brand border-t-transparent border-r-transparent transform -rotate-12"></div>
                 <div className="text-center">
-                  <span className="text-4xl font-black text-white block">{data.confidenceIndex.globalPrecision}</span>
-                  <span className="text-[10px] text-stone-500 font-bold uppercase tracking-widest">Global Precision</span>
+                  <span className="text-4xl font-black text-app-text block">{data.confidenceIndex.globalPrecision}</span>
+                  <span className="text-[10px] text-app-text-muted font-bold uppercase tracking-widest">Global Precision</span>
                 </div>
               </div>
             </div>
@@ -444,24 +421,24 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
       {/* Security & Risk Audit */}
       <section className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white">Security & Risk Audit</h2>
+          <h2 className="text-2xl font-bold text-app-text">Security & Risk Audit</h2>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-stone-800 rounded-lg text-sm font-bold text-stone-300 hover:bg-stone-900">Export Report</button>
-            <button className="px-6 py-2 bg-amber-600 text-white rounded-lg text-sm font-bold hover:bg-amber-700">Full Scan</button>
+            <button className="px-4 py-2 border border-app-border rounded-lg text-sm font-bold text-app-text hover:bg-app-surface-hover transition-colors cursor-pointer">Export Report</button>
+            <button className="px-6 py-2 bg-app-brand text-white rounded-lg text-sm font-bold hover:bg-app-brand-hover transition-colors cursor-pointer">Full Scan</button>
           </div>
         </div>
         
-        <div className="bg-[#1c1917] border border-stone-800 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-app-surface border border-app-border rounded-xl overflow-hidden shadow-sm transition-colors">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-[#0c0a09] border-b border-stone-800">
+            <thead className="bg-app-bg border-b border-app-border">
               <tr>
-                <th className="px-8 py-4 text-[10px] font-black text-stone-500 uppercase tracking-widest">Risk Type</th>
-                <th className="px-8 py-4 text-[10px] font-black text-stone-500 uppercase tracking-widest">Impact</th>
-                <th className="px-8 py-4 text-[10px] font-black text-stone-500 uppercase tracking-widest">Evidence</th>
-                <th className="px-8 py-4 text-[10px] font-black text-stone-500 uppercase tracking-widest text-right">Action</th>
+                <th className="px-8 py-4 text-[10px] font-black text-app-text-muted uppercase tracking-widest">Risk Type</th>
+                <th className="px-8 py-4 text-[10px] font-black text-app-text-muted uppercase tracking-widest">Impact</th>
+                <th className="px-8 py-4 text-[10px] font-black text-app-text-muted uppercase tracking-widest">Evidence</th>
+                <th className="px-8 py-4 text-[10px] font-black text-app-text-muted uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-800">
+            <tbody className="divide-y divide-app-border">
               {data.risks.map((risk, index) => (
                 <RiskRow 
                   key={index}
@@ -492,46 +469,46 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
 };
 
 const MetricCard: React.FC<{ title: string; value: string; suffix?: string; change?: string; trend?: string; progress?: number; detail?: string; badge?: string; icon: React.ReactNode }> = ({ title, value, suffix, change, trend, progress, detail, badge, icon }) => (
-  <div className="bg-[#1c1917] border border-stone-800 p-6 rounded-xl flex flex-col justify-between h-40">
+  <div className="bg-app-surface border border-app-border p-6 rounded-xl flex flex-col justify-between h-40 transition-colors">
     <div className="flex justify-between items-start">
-      <span className="text-stone-500 font-bold text-xs uppercase tracking-wider">{title}</span>
+      <span className="text-app-text-muted font-bold text-xs uppercase tracking-wider">{title}</span>
       {badge ? (
-        <span className="bg-orange-950 text-orange-500 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest">{badge}</span>
+        <span className="bg-rose-500/10 text-rose-600 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-500/20">{badge}</span>
       ) : icon}
     </div>
     <div className="mt-4">
-      <div className="text-3xl font-black text-white">
-        {value}{suffix && <span className="text-xl text-stone-600 ml-1">{suffix}</span>}
+      <div className="text-3xl font-black text-app-text">
+        {value}{suffix && <span className="text-xl text-app-text-muted ml-1">{suffix}</span>}
       </div>
       {change && (
-        <div className={`text-xs font-bold mt-1 ${trend === 'up' ? 'text-amber-500' : 'text-stone-500'}`}>
-          {change} <span className="text-stone-600 font-medium ml-1">from last scan</span>
+        <div className={`text-xs font-bold mt-1 ${trend === 'up' ? 'text-emerald-500' : 'text-app-text-muted'}`}>
+          {change} <span className="text-app-text-muted font-medium ml-1">from last scan</span>
         </div>
       )}
       {progress !== undefined && (
-        <div className="w-full bg-stone-900 h-1.5 rounded-full mt-3 overflow-hidden">
-          <div className="bg-amber-600 h-full rounded-full" style={{ width: `${progress}%` }}></div>
+        <div className="w-full bg-app-bg h-1.5 rounded-full mt-3 overflow-hidden border border-app-border">
+          <div className="bg-app-brand h-full rounded-full" style={{ width: `${progress}%` }}></div>
         </div>
       )}
-      {detail && <div className="text-xs text-stone-500 font-medium mt-1">{detail}</div>}
+      {detail && <div className="text-xs text-app-text-muted font-medium mt-1">{detail}</div>}
     </div>
   </div>
 );
 
 const PatternCard: React.FC<{ title: string; desc: string; locations?: string; status?: string; isRisk?: boolean; fullWidth?: boolean; tags?: string[]; icon: React.ReactNode }> = ({ title, desc, locations, status, isRisk, fullWidth, tags, icon }) => (
-  <div className={`bg-[#1c1917] border border-stone-800 p-6 rounded-xl space-y-4 ${fullWidth ? 'md:col-span-2' : ''}`}>
+  <div className={`bg-app-surface border border-app-border p-6 rounded-xl space-y-4 transition-colors ${fullWidth ? 'md:col-span-2' : ''}`}>
     <div className="flex items-start gap-4">
-      <div className={`p-3 rounded-xl ${isRisk ? 'bg-orange-950/30 text-orange-500' : 'bg-stone-900 text-amber-500'}`}>
+      <div className={`p-3 rounded-xl transition-colors ${isRisk ? 'bg-rose-500/10 text-rose-600' : 'bg-app-bg text-app-brand'}`}>
         {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-6 h-6' })}
       </div>
       <div className="flex-1">
-        <h4 className="text-sm font-bold text-white">{title}</h4>
-        <p className="text-xs text-stone-500 font-medium leading-relaxed">{desc}</p>
+        <h4 className="text-sm font-bold text-app-text">{title}</h4>
+        <p className="text-xs text-app-text-muted font-medium leading-relaxed">{desc}</p>
         {tags && (
           <div className="flex gap-2 mt-4">
             {tags.map(tag => (
-              <div key={tag} className="flex items-center gap-1.5 bg-stone-900 px-3 py-1 rounded-full text-[10px] font-bold text-stone-400">
-                <span className={`w-1.5 h-1.5 rounded-full ${tag === 'Stripe' ? 'bg-amber-500' : 'bg-orange-500'}`}></span>
+              <div key={tag} className="flex items-center gap-1.5 bg-app-bg border border-app-border px-3 py-1 rounded-full text-[10px] font-bold text-app-text-muted transition-colors">
+                <span className={`w-1.5 h-1.5 rounded-full ${tag === 'Stripe' ? 'bg-app-brand' : 'bg-emerald-500'}`}></span>
                 {tag}
               </div>
             ))}
@@ -540,9 +517,9 @@ const PatternCard: React.FC<{ title: string; desc: string; locations?: string; s
       </div>
     </div>
     {(locations || status) && (
-      <div className="flex justify-between items-center pt-4 border-t border-stone-800">
-        <span className={`text-[10px] font-black uppercase tracking-widest ${isRisk ? 'text-orange-500' : 'text-stone-600'}`}>{locations}</span>
-        <span className={`px-2 py-0.5 rounded text-[10px] font-black ${isRisk ? 'bg-orange-600 text-white' : 'bg-stone-900 text-stone-400'}`}>{status}</span>
+      <div className="flex justify-between items-center pt-4 border-t border-app-border transition-colors">
+        <span className={`text-[10px] font-black uppercase tracking-widest ${isRisk ? 'text-rose-600' : 'text-app-text-muted'}`}>{locations}</span>
+        <span className={`px-2 py-0.5 rounded text-[10px] font-black ${isRisk ? 'bg-rose-600 text-white shadow-sm' : 'bg-app-bg text-app-text-muted border border-app-border'}`}>{status}</span>
       </div>
     )}
   </div>
@@ -551,37 +528,37 @@ const PatternCard: React.FC<{ title: string; desc: string; locations?: string; s
 const ConfidenceBar: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className="space-y-1.5">
     <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest">
-      <span className="text-stone-500">{label}</span>
-      <span className="text-white">{value}%</span>
+      <span className="text-app-text-muted">{label}</span>
+      <span className="text-app-text">{value}%</span>
     </div>
-    <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
-      <div className="bg-amber-600 h-full" style={{ width: `${value}%` }}></div>
+    <div className="h-1 bg-app-bg border border-app-border rounded-full overflow-hidden transition-colors">
+      <div className="bg-app-brand h-full rounded-full" style={{ width: `${value}%` }}></div>
     </div>
   </div>
 );
 
 const RiskRow: React.FC<{ type: string; detail: string; impact: string; evidence: string; action?: string }> = ({ type, detail, impact, evidence, action = 'Dismiss' }) => (
-  <tr className="hover:bg-stone-900/50 transition-colors">
+  <tr className="hover:bg-app-surface-hover/50 transition-colors group">
     <td className="px-8 py-4">
       <div className="flex flex-col">
-        <span className="text-sm font-bold text-white">{type}</span>
-        <span className="text-xs text-stone-500 font-medium">{detail}</span>
+        <span className="text-sm font-bold text-app-text">{type}</span>
+        <span className="text-xs text-app-text-muted font-medium">{detail}</span>
       </div>
     </td>
     <td className="px-8 py-4">
-      <span className={`px-2 py-0.5 text-[10px] font-black rounded ${
-        impact === 'CRITICAL' ? 'bg-orange-950 text-orange-500' : 
-        impact === 'HIGH' ? 'bg-amber-950 text-amber-500' : 'bg-stone-800 text-stone-500'
+      <span className={`px-2 py-0.5 text-[10px] font-black rounded transition-colors ${
+        impact === 'CRITICAL' ? 'bg-rose-500/20 text-rose-600 border border-rose-500/30' : 
+        impact === 'HIGH' ? 'bg-amber-500/20 text-amber-600 border border-amber-500/30' : 'bg-app-bg text-app-text-muted border border-app-border'
       }`}>{impact}</span>
     </td>
     <td className="px-8 py-4">
-      <a className="text-amber-500 hover:underline text-xs font-bold flex items-center gap-1.5" href="#">
+      <a className="text-app-brand hover:underline text-xs font-bold flex items-center gap-1.5" href="#">
         <Link className="w-3.5 h-3.5" />
         {evidence}
       </a>
     </td>
     <td className="px-8 py-4 text-right">
-      <button className="text-amber-500 font-black text-[10px] uppercase tracking-widest hover:text-amber-400">{action}</button>
+      <button className="text-app-brand font-black text-[10px] uppercase tracking-widest hover:text-app-brand-hover cursor-pointer">{action}</button>
     </td>
   </tr>
 );
