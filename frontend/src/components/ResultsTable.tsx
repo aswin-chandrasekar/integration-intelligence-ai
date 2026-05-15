@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Database, Verified, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Integration } from '../services/api';
 
@@ -7,6 +7,32 @@ interface Props {
 }
 
 const ResultsTable: React.FC<Props> = ({ data }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [data]);
+
+  const totalItems = data.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const displayPages = totalPages || 1;
+  
+  // Safety bounds
+  const currentPageAdjusted = Math.min(Math.max(currentPage, 1), displayPages);
+
+  const startIndex = (currentPageAdjusted - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalItems);
+  const paginatedData = data.slice(startIndex, endIndex);
+
+  const handlePrevious = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNext = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, displayPages));
+  };
+
   return (
     <section className="bg-app-surface border border-app-border rounded-xl shadow-sm overflow-hidden transition-colors">
       <div className="p-6 border-b border-app-border flex justify-between items-center bg-app-surface">
@@ -36,7 +62,7 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-app-border">
-            {data.map((item) => (
+            {paginatedData.map((item) => (
               <tr key={item.id} className="hover:bg-app-surface-hover/50 transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
@@ -71,20 +97,42 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
                 </td>
               </tr>
             ))}
+            {paginatedData.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-6 py-8 text-center text-sm text-app-text-muted">
+                  No integration records found.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="p-4 bg-app-bg flex justify-between items-center px-6 border-t border-app-border transition-colors">
-        <p className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">Showing {data.length} discovered integrations</p>
+        <p className="text-[10px] font-black text-app-text-muted uppercase tracking-widest">
+          Showing {totalItems > 0 ? startIndex + 1 : 0}-{endIndex} of {totalItems} discovered integrations
+        </p>
 
-        <div className="flex gap-2">
-          <button className="p-1.5 border border-app-border rounded hover:bg-app-surface-hover transition-colors cursor-pointer">
-            <ChevronLeft className="w-4 h-4 text-app-text-muted" />
-          </button>
-          <button className="p-1.5 border border-app-border rounded hover:bg-app-surface-hover transition-colors cursor-pointer">
-            <ChevronRight className="w-4 h-4 text-app-text-muted" />
-          </button>
+        <div className="flex items-center gap-4">
+          <span className="text-xs font-bold text-app-text-muted">
+            Page {currentPageAdjusted} of {displayPages}
+          </span>
+          <div className="flex gap-2">
+            <button 
+              onClick={handlePrevious}
+              disabled={currentPageAdjusted === 1}
+              className="p-1.5 border border-app-border rounded hover:bg-app-surface-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-4 h-4 text-app-text-muted" />
+            </button>
+            <button 
+              onClick={handleNext}
+              disabled={currentPageAdjusted >= displayPages}
+              className="p-1.5 border border-app-border rounded hover:bg-app-surface-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRight className="w-4 h-4 text-app-text-muted" />
+            </button>
+          </div>
         </div>
       </div>
     </section>

@@ -5,11 +5,7 @@ import {
   Network, 
   Database, 
   BrainCircuit, 
-  Plus,
-  Settings,
   HelpCircle,
-  Bell,
-  Search as SearchIcon,
   User,
   Sun,
   Moon,
@@ -32,14 +28,6 @@ export const TopNav: React.FC<TopNavProps> = ({ theme, toggleTheme }) => {
       </div>
 
       <div className="flex items-center gap-6">
-        <div className="flex items-center bg-app-bg border border-app-border px-3 py-1.5 rounded-lg w-64 group focus-within:border-app-brand transition-all">
-          <SearchIcon className="text-app-text-muted w-4 h-4" />
-          <input 
-            className="bg-transparent border-none focus:ring-0 text-sm w-full px-2 placeholder:text-app-text-muted/60 text-app-text outline-none" 
-            placeholder="Search resources..." 
-            type="text"
-          />
-        </div>
         <div className="flex gap-2">
           <button 
             onClick={toggleTheme}
@@ -47,12 +35,6 @@ export const TopNav: React.FC<TopNavProps> = ({ theme, toggleTheme }) => {
             aria-label="Toggle Theme"
           >
             {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-          <button className="p-2 hover:bg-app-surface-hover rounded-full transition-colors text-app-text-muted">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2 hover:bg-app-surface-hover rounded-full transition-colors text-app-text-muted">
-            <Settings className="w-5 h-5" />
           </button>
         </div>
         <div className="w-9 h-9 rounded-full overflow-hidden border border-app-border bg-app-surface-hover flex items-center justify-center">
@@ -153,12 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </nav>
 
-      <div className={`mt-auto ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <button className={`w-full flex items-center justify-center bg-app-brand text-white rounded-xl font-bold text-sm hover:bg-app-brand-hover transition-all shadow-lg shadow-app-brand/20 active:scale-95 cursor-pointer ${isCollapsed ? 'p-3' : 'py-3 px-4 gap-2'}`}>
-          <Plus className="w-4 h-4 min-w-[16px]" />
-          {!isCollapsed && <span>New Integration</span>}
-        </button>
-      </div>
+
     </aside>
   );
 };
