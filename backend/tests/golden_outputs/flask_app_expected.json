@@ -1,0 +1,124 @@
+{
+  "file": "sample_flask_app.py",
+  "type": "FLASK_APP",
+  "integrations": {
+    "OUTBOUND_HTTP": [
+      {
+        "method": "get",
+        "url": "${BASE_URL}/v1/data",
+        "source": "f_string",
+        "line": 42,
+        "confidence": "75%",
+        "description": "Dynamic URL composition with environment variable"
+      },
+      {
+        "method": "post",
+        "url": "env_var:EXTERNAL_API",
+        "source": "environment_variable",
+        "line": 48,
+        "confidence": "65%",
+        "description": "URL from environment variable with default"
+      },
+      {
+        "method": "get",
+        "url": "https://api.service.com/v2/endpoint",
+        "source": "concatenation",
+        "line": 55,
+        "confidence": "70%",
+        "description": "URL built via string concatenation"
+      },
+      {
+        "method": "get",
+        "url": "${BASE_URL}/protected",
+        "source": "f_string",
+        "line": 62,
+        "confidence": "75%",
+        "description": "Session-based call with environment variable"
+      }
+    ],
+    "INBOUND_API": [
+      {
+        "path": "/api/data",
+        "methods": ["GET", "POST"],
+        "handler": "get_data",
+        "line": 28,
+        "confidence": "100%",
+        "description": "Direct Flask route decorator"
+      },
+      {
+        "path": "/api/users/<int:user_id>",
+        "methods": ["GET"],
+        "handler": "get_user",
+        "line": 33,
+        "confidence": "100%",
+        "description": "Flask route with path parameter"
+      },
+      {
+        "path": "/api/v2/items",
+        "methods": ["GET"],
+        "handler": "list_items",
+        "line": 82,
+        "confidence": "85%",
+        "description": "Blueprint registration"
+      },
+      {
+        "path": "/admin/users",
+        "methods": ["GET"],
+        "handler": "admin_users",
+        "line": 0,
+        "confidence": "70%",
+        "description": "Config-based route registration"
+      },
+      {
+        "path": "/admin/stats",
+        "methods": ["GET", "POST"],
+        "handler": "admin_stats",
+        "line": 0,
+        "confidence": "70%",
+        "description": "Config-based route registration"
+      }
+    ],
+    "FILE": [
+      {
+        "operation": "open",
+        "path": "${CONFIG_DIR}/config.json",
+        "mode": "read",
+        "line": 71,
+        "confidence": "85%",
+        "description": "JSON config file with environment path"
+      },
+      {
+        "operation": "pd.read_csv",
+        "path": "env_var:DATA_FILE",
+        "line": 77,
+        "confidence": "80%",
+        "description": "CSV read via environment variable"
+      }
+    ],
+    "DB": [
+      {
+        "type": "SQLAlchemy",
+        "engine": true,
+        "url": "env_var:DATABASE_URL",
+        "line": 18,
+        "confidence": "80%",
+        "description": "SQLAlchemy engine from environment URL"
+      }
+    ]
+  },
+  "environment_variables": {
+    "DATABASE_URL": "sqlite:///default.db",
+    "API_KEY": null,
+    "BASE_URL": "https://api.example.com",
+    "CONFIG_DIR": ".",
+    "DATA_FILE": "data/input.csv"
+  },
+  "summary": {
+    "total_integrations": 11,
+    "http_outbound": 4,
+    "http_inbound": 5,
+    "file_operations": 2,
+    "database_connections": 1,
+    "environment_vars": 5
+  }
+}

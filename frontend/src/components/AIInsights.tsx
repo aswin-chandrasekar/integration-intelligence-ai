@@ -149,162 +149,6 @@ const defaultData: InsightsData = {
 const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNavigateToSection, integrations = [] }) => {
   const [data, setData] = useState<InsightsData>(defaultData);
 
-  // Calculate metrics based on integrations data
-  const calculateMetrics = (integrations: any[]): InsightsData => {
-    const totalIntegrations = integrations.length;
-
-    // Calculate architecture score based on integration patterns
-    const syncIntegrations = integrations.filter(i => i.type === 'SYNC_API').length;
-    const dbIntegrations = integrations.filter(i => i.type === 'DB').length;
-    const fileIntegrations = integrations.filter(i => i.type === 'FILE').length;
-
-    // Architecture score: higher is better (100 - penalties for risky patterns)
-    let architectureScore = 100;
-    architectureScore -= syncIntegrations * 2; // Penalty for sync APIs
-    architectureScore -= dbIntegrations * 3; // Penalty for direct DB access
-    architectureScore -= fileIntegrations * 1; // Penalty for file-based integrations
-    architectureScore = Math.max(0, Math.min(100, architectureScore));
-
-    // Calculate security risks based on patterns
-    let securityRisks = 0;
-    if (dbIntegrations > 0) securityRisks += dbIntegrations; // Direct DB access is a risk
-    if (fileIntegrations > 0) securityRisks += Math.floor(fileIntegrations / 2); // File access can be risky
-    if (syncIntegrations > 10) securityRisks += 5; // Too many sync integrations
-
-    // Calculate matching confidence based on evidence quality
-    const avgConfidence = integrations.length > 0
-      ? integrations.reduce((sum, i) => {
-          const confidence = i.confidence || '0%';
-          const match = confidence.match(/(\d+)/);
-          return sum + (match ? parseInt(match[1]) : 0);
-        }, 0) / integrations.length
-      : 0;
-
-    // Generate architectural patterns
-    const patterns = [];
-
-    // Event-Driven Synchronization
-    const hasEventDriven = integrations.some(i => i.type === 'PUB_SUB' || i.type === 'ASYNC_API');
-    if (hasEventDriven || syncIntegrations < totalIntegrations * 0.3) {
-      patterns.push({
-        title: "Event-Driven Synchronization",
-        desc: hasEventDriven ? "Primary flow for high-scale messaging systems." : "Limited synchronous coupling detected.",
-        locations: hasEventDriven ? `${integrations.filter(i => i.type === 'PUB_SUB' || i.type === 'ASYNC_API').length} Locations Found` : "Recommended Pattern",
-        status: hasEventDriven ? "STABLE" : "OPTIMAL",
-        icon: "RefreshCw"
-      });
-    }
-
-    // Direct SQL Access
-    if (dbIntegrations > 0) {
-      patterns.push({
-        title: "Direct SQL Access",
-        desc: "Found in legacy modules, bypasses API layers.",
-        locations: `${dbIntegrations} Locations Found`,
-        status: "RISK",
-        isRisk: true,
-        icon: "Database"
-      });
-    }
-
-    // Third-Party API Dependency
-    const thirdPartyAPIs = integrations.filter(i =>
-      i.target && (i.target.toLowerCase().includes('stripe') ||
-                   i.target.toLowerCase().includes('twilio') ||
-                   i.target.toLowerCase().includes('aws') ||
-                   i.target.toLowerCase().includes('google'))
-    );
-    if (thirdPartyAPIs.length > 0) {
-      patterns.push({
-        title: "Third-Party API Dependency",
-        desc: `High reliance on external services found across ${thirdPartyAPIs.length} integrations.`,
-        fullWidth: true,
-        tags: [...new Set(thirdPartyAPIs.map(i => i.target.split('.')[0]))],
-        icon: "Cloud"
-      });
-    }
-
-    // Calculate confidence index
-    const confidenceIndex = {
-      globalPrecision: Math.round(avgConfidence),
-      dataMapping: Math.round(avgConfidence * 1.1),
-      securityLogic: Math.round(85 + (avgConfidence * 0.1)),
-      latencyPrediction: Math.round(88 + (avgConfidence * 0.1))
-    };
-
-    // Generate security risks
-    const risks = [];
-    if (dbIntegrations > 0) {
-      risks.push({
-        type: "Direct Database Access",
-        detail: `${dbIntegrations} direct database connections detected`,
-        impact: dbIntegrations > 3 ? "CRITICAL" : "HIGH",
-        evidence: "Multiple integration points",
-        action: "Implement API abstraction layer"
-      });
-    }
-
-    if (fileIntegrations > 0) {
-      risks.push({
-        type: "File-Based Integration",
-        detail: `${fileIntegrations} file-based integrations found`,
-        impact: "MEDIUM",
-        evidence: "File system dependencies",
-        action: "Migrate to API-based integration"
-      });
-    }
-
-    if (syncIntegrations > 10) {
-      risks.push({
-        type: "High Synchronous Coupling",
-        detail: `${syncIntegrations} synchronous integrations may cause cascading failures`,
-        impact: "HIGH",
-        evidence: "Architecture analysis",
-        action: "Implement circuit breakers"
-      });
-    }
-
-    // Generate recommendations
-    const recommendations = [];
-    if (dbIntegrations > 0) {
-      recommendations.push({
-        icon: "Database",
-        title: "Implement Database Abstraction Layer",
-        desc: `Replace ${dbIntegrations} direct database connections with API-based access patterns.`
-      });
-    }
-
-    if (syncIntegrations > totalIntegrations * 0.5) {
-      recommendations.push({
-        icon: "Zap",
-        title: "Reduce Synchronous Dependencies",
-        desc: `Convert ${Math.floor(syncIntegrations * 0.3)} synchronous integrations to event-driven patterns.`
-      });
-    }
-
-    return {
-      metrics: {
-        totalIntegrations: { value: totalIntegrations, change: "+0%", trend: "up" },
-        activeSecurityRisks: {
-          value: securityRisks,
-          change: securityRisks > 5 ? "+High" : "+Low",
-          trend: securityRisks > 5 ? "up" : "stable",
-          badge: securityRisks > 10 ? "Critical" : securityRisks > 5 ? "High" : "Medium"
-        },
-        architectureScore: { value: architectureScore, progress: architectureScore, suffix: "/100" },
-        matchingConfidence: {
-          value: Math.round(avgConfidence),
-          detail: `Neural precision: ${avgConfidence > 90 ? 'high' : avgConfidence > 70 ? 'medium' : 'low'}`,
-          suffix: "%"
-        }
-      },
-      patterns,
-      confidenceIndex,
-      risks,
-      recommendations
-    };
-  };
-
   useEffect(() => {
     const fetchInsights = async () => {
       try {
@@ -313,18 +157,64 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
         setData(jsonData);
       } catch (error) {
         console.error('Error fetching insights:', error);
-        // Fallback to calculated data
-        setData(calculateMetrics(integrations));
       }
     };
 
-    // Use calculated data if we have integrations, otherwise fetch from API
-    if (integrations.length > 0) {
-      setData(calculateMetrics(integrations));
-    } else {
-      fetchInsights();
-    }
+    fetchInsights();
   }, [integrations]);
+
+  const handleExportReport = () => {
+    const lines: string[] = [];
+    const now = new Date();
+    lines.push('AI Insights Report');
+    lines.push(`Generated: ${now.toLocaleString()}`);
+    lines.push('');
+    lines.push('--- Metrics ---');
+    lines.push(`Total Integrations: ${data.metrics.totalIntegrations.value} (${data.metrics.totalIntegrations.change})`);
+    lines.push(`Active Security Risks: ${data.metrics.activeSecurityRisks.value} (${data.metrics.activeSecurityRisks.badge})`);
+    lines.push(`Architecture Score: ${data.metrics.architectureScore.value}${data.metrics.architectureScore.suffix}`);
+    lines.push(`Matching Confidence: ${data.metrics.matchingConfidence.value}${data.metrics.matchingConfidence.suffix}`);
+    lines.push('');
+    lines.push('--- Architectural Patterns ---');
+    data.patterns.forEach(pattern => {
+      lines.push(`- ${pattern.title}`);
+      lines.push(`  Description: ${pattern.desc}`);
+      if (pattern.locations) lines.push(`  Locations: ${pattern.locations}`);
+      if (pattern.status) lines.push(`  Status: ${pattern.status}`);
+      if (pattern.tags?.length) lines.push(`  Tags: ${pattern.tags.join(', ')}`);
+      lines.push('');
+    });
+    lines.push('--- Confidence Index ---');
+    lines.push(`Global Precision: ${data.confidenceIndex.globalPrecision}%`);
+    lines.push(`Data Mapping: ${data.confidenceIndex.dataMapping}%`);
+    lines.push(`Security Logic: ${data.confidenceIndex.securityLogic}%`);
+    lines.push(`Latency Prediction: ${data.confidenceIndex.latencyPrediction}%`);
+    lines.push('');
+    lines.push('--- Risks ---');
+    data.risks.forEach(risk => {
+      lines.push(`- ${risk.type} (${risk.impact})`);
+      lines.push(`  Evidence: ${risk.evidence}`);
+      lines.push(`  Detail: ${risk.detail}`);
+      if (risk.action) lines.push(`  Action: ${risk.action}`);
+      lines.push('');
+    });
+    lines.push('--- Recommendations ---');
+    data.recommendations.forEach(rec => {
+      lines.push(`- ${rec.title}`);
+      lines.push(`  ${rec.desc}`);
+      lines.push('');
+    });
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ai-insights-report-${now.toISOString().slice(0,19).replace(/[:T]/g, '-')}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-10">
@@ -375,8 +265,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
         <div className="lg:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-app-text">Architectural Patterns</h2>
-            <button className="text-app-brand font-bold text-sm hover:underline cursor-pointer">View all maps</button>
-          </div>
+            </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.patterns.map((pattern, index) => (
@@ -423,8 +312,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-app-text">Security & Risk Audit</h2>
           <div className="flex gap-2">
-            <button className="px-4 py-2 border border-app-border rounded-lg text-sm font-bold text-app-text hover:bg-app-surface-hover transition-colors cursor-pointer">Export Report</button>
-            <button className="px-6 py-2 bg-app-brand text-white rounded-lg text-sm font-bold hover:bg-app-brand-hover transition-colors cursor-pointer">Full Scan</button>
+            <button onClick={handleExportReport} className="px-4 py-2 border border-app-border rounded-lg text-sm font-bold text-app-text hover:bg-app-surface-hover transition-colors cursor-pointer">Export Report</button>
           </div>
         </div>
         
@@ -552,13 +440,13 @@ const RiskRow: React.FC<{ type: string; detail: string; impact: string; evidence
       }`}>{impact}</span>
     </td>
     <td className="px-8 py-4">
-      <a className="text-app-brand hover:underline text-xs font-bold flex items-center gap-1.5" href="#">
+      <div className="text-app-text text-xs font-bold flex items-center gap-1.5">
         <Link className="w-3.5 h-3.5" />
         {evidence}
-      </a>
+      </div>
     </td>
     <td className="px-8 py-4 text-right">
-      <button className="text-app-brand font-black text-[10px] uppercase tracking-widest hover:text-app-brand-hover cursor-pointer">{action}</button>
+      <span className="text-app-text font-black text-[10px] uppercase tracking-widest">{action}</span>
     </td>
   </tr>
 );

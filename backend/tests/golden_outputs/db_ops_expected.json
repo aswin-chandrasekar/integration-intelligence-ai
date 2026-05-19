@@ -1,0 +1,101 @@
+{
+  "file": "sample_db_ops.py",
+  "type": "DATABASE_OPERATIONS",
+  "integrations": {
+    "DB": [
+      {
+        "type": "SQLite",
+        "detection": "Direct Match",
+        "method": "sqlite3.connect",
+        "line": 11,
+        "confidence": "85%",
+        "description": "Direct SQLite connection"
+      },
+      {
+        "type": "SQLAlchemy",
+        "detection": "Dynamic Connection",
+        "url": "env_var:DATABASE_URL",
+        "line": 15,
+        "confidence": "80%",
+        "description": "SQLAlchemy engine from environment"
+      },
+      {
+        "type": "Unknown",
+        "detection": "Dynamic Connection",
+        "method": "create_engine",
+        "line": 21,
+        "confidence": "65%",
+        "description": "Dynamic engine creation"
+      },
+      {
+        "type": "PostgreSQL",
+        "detection": "Direct Match",
+        "method": "psycopg2.connect",
+        "line": 32,
+        "confidence": "85%",
+        "description": "PostgreSQL connection with env config"
+      },
+      {
+        "type": "MongoDB",
+        "detection": "Environment Config",
+        "env_var": "MONGO_URL",
+        "line": 37,
+        "confidence": "70%",
+        "description": "MongoDB client from environment URL"
+      },
+      {
+        "type": "SQLAlchemy",
+        "detection": "Usage",
+        "object": "User",
+        "line": 44,
+        "confidence": "85%",
+        "description": "SQLAlchemy ORM model"
+      },
+      {
+        "type": "PostgreSQL",
+        "detection": "Config-Based",
+        "line": 0,
+        "confidence": "75%",
+        "description": "Config dictionary with database details"
+      },
+      {
+        "type": "Redis",
+        "detection": "Dynamic Connection",
+        "method": "from_url",
+        "line": 60,
+        "confidence": "75%",
+        "description": "Redis client from environment URL"
+      },
+      {
+        "type": "Cassandra",
+        "detection": "Dynamic Connection",
+        "method": "Cluster",
+        "line": 65,
+        "confidence": "70%",
+        "description": "Cassandra cluster from environment hosts"
+      }
+    ]
+  },
+  "environment_variables": {
+    "DATABASE_URL": "postgresql://user:pass@localhost/db",
+    "DB_TYPE": "sqlite",
+    "DB_URL": null,
+    "DB_HOST": "localhost",
+    "DB_PORT": "5432",
+    "DB_NAME": "mydb",
+    "DB_USER": null,
+    "DB_PASSWORD": null,
+    "MONGO_URL": "mongodb://localhost:27017",
+    "REDIS_URL": "redis://localhost:6379",
+    "CASSANDRA_HOSTS": "localhost"
+  },
+  "summary": {
+    "total_db_connections": 9,
+    "direct_connections": 2,
+    "env_var_connections": 4,
+    "dynamic_connections": 2,
+    "config_based": 1,
+    "database_types": ["SQLite", "SQLAlchemy", "PostgreSQL", "MongoDB", "Redis", "Cassandra"],
+    "environment_vars": 11
+  }
+}

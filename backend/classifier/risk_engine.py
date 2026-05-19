@@ -1,5 +1,17 @@
 from collections import defaultdict, deque
 
+
+def normalize_target_name(target, edge_type):
+    if edge_type == "DB":
+        return "DB"
+    if edge_type == "FILE":
+        name = str(target or "").lower()
+        if "json" in name:
+            return "JSON Data"
+        return "Native File IO"
+    return target
+
+
 def calculate_risk(edges):
 
     fan_out = defaultdict(int)
@@ -13,11 +25,18 @@ def calculate_risk(edges):
     # Build Metrics
     # -----------------------------------
 
+    seen_edges = set()
+
     for edge in edges:
 
         source = edge.get("source")
-        target = edge.get("target")
+        target = normalize_target_name(edge.get("target"), edge.get("type"))
         edge_type = edge.get("type")
+        edge_key = (source, target, edge_type)
+
+        if edge_key in seen_edges:
+            continue
+        seen_edges.add(edge_key)
 
         systems.add(source)
         systems.add(target)

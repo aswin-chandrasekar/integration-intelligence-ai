@@ -1,0 +1,212 @@
+{
+  "file": "sample_file_ops.py",
+  "type": "FILE_OPERATIONS",
+  "integrations": {
+    "FILE": [
+      {
+        "operation": "open",
+        "type": "native",
+        "path": "config.json",
+        "line": 10,
+        "confidence": "85%",
+        "description": "Direct file open with hardcoded path"
+      },
+      {
+        "operation": "path_variable",
+        "type": "environment",
+        "env_var": "CONFIG_DIR",
+        "default": "./config",
+        "line": 15,
+        "confidence": "70%",
+        "description": "Environment-based config directory"
+      },
+      {
+        "operation": "path_variable",
+        "type": "environment",
+        "env_var": "DATA_DIR",
+        "default": "./data",
+        "line": 16,
+        "confidence": "70%",
+        "description": "Environment-based data directory"
+      },
+      {
+        "operation": "path_variable",
+        "type": "environment",
+        "env_var": "LOG_DIR",
+        "default": "./logs",
+        "line": 17,
+        "confidence": "70%",
+        "description": "Environment-based log directory"
+      },
+      {
+        "operation": "open",
+        "type": "concatenation",
+        "path": "${CONFIG_DIR}/settings.json",
+        "line": 19,
+        "confidence": "75%",
+        "description": "File path from env var concatenation"
+      },
+      {
+        "operation": "open",
+        "type": "concatenation",
+        "path": "${DATA_DIR}/input.csv",
+        "line": 20,
+        "confidence": "75%",
+        "description": "Data file path from env var concatenation"
+      },
+      {
+        "operation": "json.load",
+        "type": "dynamic_env",
+        "path": "${CONFIG_DIR}/settings.json",
+        "line": 24,
+        "confidence": "80%",
+        "description": "JSON load from environment path"
+      },
+      {
+        "operation": "pd.read_csv",
+        "type": "f_string",
+        "path": "${DATA_DIR}/v${version}/users.csv",
+        "line": 31,
+        "confidence": "75%",
+        "description": "CSV read with dynamic f-string path"
+      },
+      {
+        "operation": "open",
+        "type": "concatenation",
+        "path": "${REPORTS_DIR}/${date}_report.json",
+        "line": 38,
+        "confidence": "70%",
+        "description": "Report file path via concatenation"
+      },
+      {
+        "operation": "yaml.safe_load",
+        "type": "dynamic_env",
+        "path": "${CONFIG_DIR}/app.yaml",
+        "line": 45,
+        "confidence": "80%",
+        "description": "YAML config load from environment path"
+      },
+      {
+        "operation": "pickle.dump",
+        "type": "f_string",
+        "path": "${MODEL_DIR}/${name}.pkl",
+        "line": 52,
+        "confidence": "75%",
+        "description": "Pickle save with dynamic path"
+      },
+      {
+        "operation": "pickle.load",
+        "type": "f_string",
+        "path": "${MODEL_DIR}/${name}.pkl",
+        "line": 59,
+        "confidence": "75%",
+        "description": "Pickle load with dynamic path"
+      },
+      {
+        "operation": "configparser",
+        "type": "dynamic_env",
+        "path": "${CONFIG_DIR}/app.ini",
+        "line": 66,
+        "confidence": "80%",
+        "description": "INI config read from environment path"
+      },
+      {
+        "operation": "pathlib.glob",
+        "type": "dynamic_env",
+        "path": "${DATA_DIR}/*.csv",
+        "line": 73,
+        "confidence": "75%",
+        "description": "Pathlib glob with environment path"
+      },
+      {
+        "operation": "pd.read_excel",
+        "type": "dynamic_env",
+        "path": "${EXCEL_DIR}/report.xlsx",
+        "line": 80,
+        "confidence": "75%",
+        "description": "Excel read from environment path"
+      },
+      {
+        "operation": "config_dict",
+        "type": "environment",
+        "env_vars": ["INPUT_FILE", "OUTPUT_FILE", "LOG_FILE", "TEMP_DIR"],
+        "line": 84,
+        "confidence": "65%",
+        "description": "File configuration dictionary"
+      },
+      {
+        "operation": "open",
+        "type": "config_reference",
+        "path": "FILE_CONFIG[input_file]",
+        "line": 91,
+        "confidence": "60%",
+        "description": "File open using config dictionary reference"
+      },
+      {
+        "operation": "pathlib.resolve",
+        "type": "concatenation",
+        "path": "${BASE_DIR}/data/${filename}",
+        "line": 101,
+        "confidence": "70%",
+        "description": "Pathlib relative path construction"
+      },
+      {
+        "operation": "Path.read_text",
+        "type": "dynamic_env",
+        "path": "${CONFIG_DIR}/config.txt",
+        "line": 108,
+        "confidence": "75%",
+        "description": "Pathlib read_text from environment path"
+      },
+      {
+        "operation": "Path.write_text",
+        "type": "dynamic_env",
+        "path": "${LOG_DIR}/app.log",
+        "line": 114,
+        "confidence": "75%",
+        "description": "Pathlib write_text to environment path"
+      }
+    ]
+  },
+  "environment_variables": {
+    "CONFIG_DIR": "./config",
+    "DATA_DIR": "./data",
+    "LOG_DIR": "./logs",
+    "REPORTS_DIR": "./reports",
+    "MODEL_DIR": "./models",
+    "EXCEL_DIR": "./data",
+    "INPUT_FILE": "./data/input.csv",
+    "OUTPUT_FILE": "./data/output.csv",
+    "LOG_FILE": "./logs/app.log",
+    "TEMP_DIR": "./tmp",
+    "BASE_DIR": "."
+  },
+  "summary": {
+    "total_file_operations": 20,
+    "environment_based": 12,
+    "f_string_paths": 4,
+    "concatenation_paths": 4,
+    "config_based": 1,
+    "pathlib_operations": 2,
+    "file_types": [
+      "JSON",
+      "CSV",
+      "YAML",
+      "Pickle",
+      "INI",
+      "Excel",
+      "Text"
+    ],
+    "environment_vars": 11,
+    "operations": [
+      "open",
+      "json.load",
+      "pd.read_csv",
+      "yaml.safe_load",
+      "pickle",
+      "configparser",
+      "pathlib",
+      "pd.read_excel"
+    ]
+  }
+}

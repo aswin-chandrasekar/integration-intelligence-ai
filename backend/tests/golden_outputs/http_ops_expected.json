@@ -1,0 +1,165 @@
+{
+  "file": "sample_http_ops.py",
+  "type": "HTTP_OPERATIONS",
+  "integrations": {
+    "OUTBOUND_HTTP": [
+      {
+        "method": "get",
+        "url": "https://api.example.com/data",
+        "source": "literal_string",
+        "line": 9,
+        "confidence": "95%",
+        "description": "Direct HTTP call with literal URL"
+      },
+      {
+        "method": "get",
+        "url": "env_var:API_URL",
+        "source": "environment_variable",
+        "line": 18,
+        "confidence": "65%",
+        "description": "HTTP call using environment variable"
+      },
+      {
+        "method": "get",
+        "url": "https://${api_host}/v${version}/users",
+        "source": "f_string",
+        "line": 24,
+        "confidence": "75%",
+        "description": "URL composition with f-string"
+      },
+      {
+        "method": "post",
+        "url": "${SERVICE_URL}/api/v2/data",
+        "source": "concatenation",
+        "line": 31,
+        "confidence": "70%",
+        "description": "URL built via string concatenation"
+      },
+      {
+        "method": "get",
+        "url": "${BASE_URL}/users",
+        "source": "concatenation",
+        "line": 41,
+        "confidence": "70%",
+        "description": "Base URL + endpoint pattern"
+      },
+      {
+        "method": "get",
+        "url": "${API_BASE}/protected",
+        "source": "f_string",
+        "line": 52,
+        "confidence": "75%",
+        "description": "Session GET request with environment variable"
+      },
+      {
+        "method": "post",
+        "url": "${API_BASE}/submit",
+        "source": "f_string",
+        "line": 53,
+        "confidence": "75%",
+        "description": "Session POST request with environment variable"
+      },
+      {
+        "method": "get",
+        "url": "env_var:HTTPX_URL",
+        "source": "environment_variable",
+        "library": "httpx",
+        "line": 58,
+        "confidence": "65%",
+        "description": "Async httpx call"
+      },
+      {
+        "method": "post",
+        "url": "env_var:WEBHOOK_URL",
+        "source": "environment_variable",
+        "library": "aiohttp",
+        "line": 65,
+        "confidence": "65%",
+        "description": "Async aiohttp POST"
+      },
+      {
+        "method": "urlopen",
+        "url": "env_var:URLLIB_URL",
+        "source": "environment_variable",
+        "library": "urllib",
+        "line": 71,
+        "confidence": "85%",
+        "description": "urllib request"
+      },
+      {
+        "method": "get",
+        "url": "${BASE}/v1/users",
+        "source": "concatenation",
+        "library": "requests",
+        "line": 77,
+        "confidence": "70%",
+        "description": "urljoin URL construction"
+      },
+      {
+        "method": "get",
+        "url": "https://api-${region}.example.com/api/v2/resources/${resource_id}",
+        "source": "f_string",
+        "line": 85,
+        "confidence": "75%",
+        "description": "Complex dynamic URL with query params"
+      },
+      {
+        "method": "get",
+        "url": "${base_url}/users",
+        "source": "f_string",
+        "line": 99,
+        "confidence": "75%",
+        "description": "Indirect call via client object method"
+      },
+      {
+        "method": "post",
+        "url": "${base_url}/resources",
+        "source": "concatenation",
+        "line": 103,
+        "confidence": "70%",
+        "description": "POST via client object method"
+      },
+      {
+        "method": "get",
+        "url": "${api_url}/users",
+        "source": "f_string",
+        "line": 109,
+        "confidence": "75%",
+        "description": "First chained HTTP call"
+      },
+      {
+        "method": "get",
+        "url": "${api_url}/users/${user_id}/profile",
+        "source": "f_string",
+        "line": 113,
+        "confidence": "75%",
+        "description": "Chained call using result from first call"
+      }
+    ]
+  },
+  "environment_variables": {
+    "API_URL": "https://api.default.com",
+    "WEBHOOK_URL": null,
+    "API_HOST": "api.example.com",
+    "SERVICE_URL": "https://service.local",
+    "BASE_URL": "https://api.example.com",
+    "API_KEY": null,
+    "API_BASE": "https://api.service.com",
+    "HTTPX_URL": "https://httpx-api.example.com",
+    "URLLIB_URL": "https://urllib-endpoint.local",
+    "API_BASE_URL": "https://api.example.com",
+    "CLIENT_ID": null,
+    "CHAINED_API_URL": "https://api.chain.local"
+  },
+  "summary": {
+    "total_http_calls": 16,
+    "using_env_vars": 6,
+    "using_f_strings": 7,
+    "using_concatenation": 4,
+    "literal_strings": 1,
+    "async_calls": 2,
+    "libraries": ["requests", "httpx", "aiohttp", "urllib"],
+    "environment_vars": 12,
+    "methods": ["GET", "POST", "urlopen"]
+  }
+}
