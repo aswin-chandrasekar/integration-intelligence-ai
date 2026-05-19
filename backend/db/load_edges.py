@@ -31,7 +31,13 @@ def load_edges(file_path="backend/data/edges.json"):
         session.add(edge_obj)
         session.commit()
 
-        for ev in edge.get("evidence", []):
+        ev_list = edge.get("evidence", [])
+        if isinstance(ev_list, str):
+            ev_list = [ev_list]
+        elif not isinstance(ev_list, list):
+            ev_list = []
+
+        for ev in ev_list:
             if isinstance(ev, dict):
                 evidence = Evidence(
                     edge_id=edge_obj.id,
@@ -43,8 +49,8 @@ def load_edges(file_path="backend/data/edges.json"):
                 # fallback if evidence is just a string
                 evidence = Evidence(
                     edge_id=edge_obj.id,
-                    file="unknown",
-                    line=0,
+                    file=edge.get("file", "unknown"),
+                    line=edge.get("line", 0),
                     snippet=str(ev)
                 )
 

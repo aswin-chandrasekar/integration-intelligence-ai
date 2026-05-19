@@ -607,7 +607,7 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
               maxHeight: "300px",
               overflowY: "auto",
               color: "var(--app-text)",
-              width: "280px"
+              width: "480px"
             }}>
               <p style={{ fontWeight: "bold", borderBottom: "1px solid var(--app-border)", paddingBottom: "8px", marginBottom: "12px" }}>
                 Integrations ({selectedEdge.data?.integrations?.length || 0})
@@ -617,8 +617,8 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
                 {selectedEdge.data?.integrations?.map((int: Integration, i: number) => (
                   <div key={i} style={{ fontSize: "12px", background: "var(--app-bg)", border: "1px solid var(--app-border)", padding: "8px", borderRadius: "4px" }}>
                     <p style={{ color: "#f97316", fontWeight: "bold" }}>{int.type}</p>
-                    <p style={{ color: "var(--app-text-muted)", marginTop: "4px" }}>
-                      <b>File:</b> {int.file?.split('/').pop()}
+                    <p style={{ color: "var(--app-text-muted)", marginTop: "4px", wordBreak: "break-all" }}>
+                      <b>File:</b> {int.file}
                     </p>
                     <p style={{ color: "var(--app-text-muted)" }}>
                       <b>Line:</b> {int.line}

@@ -14,7 +14,7 @@ from classifier.risk_engine import calculate_risk
 
 class TestFanOutRiskCalculation:
     """Test fan-out based risk calculation."""
-    
+
     def test_high_fanout_increases_risk(self):
         """Test that high fan-out increases risk score."""
         edges = [
@@ -24,26 +24,26 @@ class TestFanOutRiskCalculation:
             {"source": "Gateway", "target": "ServiceD", "type": "SYNC_API"},
             {"source": "Gateway", "target": "ServiceE", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-        assert "risk_score" in risk or "risk" in risk or len(risk) > 0
-    
+
+        assert isinstance(risk, list)
+        assert len(risk) > 0
+
     def test_low_fanout_low_risk(self):
         """Test that low fan-out results in lower risk."""
         edges = [
             {"source": "ServiceA", "target": "ServiceB", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestFanInRiskCalculation:
     """Test fan-in based risk calculation."""
-    
+
     def test_high_fanin_increases_risk(self):
         """Test that high fan-in increases bottleneck risk."""
         edges = [
@@ -52,15 +52,15 @@ class TestFanInRiskCalculation:
             {"source": "ServiceC", "target": "Database", "type": "DB"},
             {"source": "ServiceD", "target": "Database", "type": "DB"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestSyncChainDepth:
     """Test risk from synchronous call chains."""
-    
+
     def test_deep_sync_chain_risk(self):
         """Test that deep synchronous chains increase risk."""
         edges = [
@@ -69,25 +69,25 @@ class TestSyncChainDepth:
             {"source": "ServiceB", "target": "ServiceC", "type": "SYNC_API"},
             {"source": "ServiceC", "target": "Database", "type": "DB"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_short_chain_lower_risk(self):
         """Test that short chains have lower risk."""
         edges = [
             {"source": "API", "target": "Database", "type": "DB"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestCircularDependencyRisk:
     """Test risk from circular dependencies."""
-    
+
     def test_circular_dependency_detection(self):
         """Test detection of circular dependencies."""
         edges = [
@@ -95,52 +95,54 @@ class TestCircularDependencyRisk:
             {"source": "ServiceB", "target": "ServiceC", "type": "SYNC_API"},
             {"source": "ServiceC", "target": "ServiceA", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_self_loop_risk(self):
         """Test risk from self-referential calls."""
         edges = [
             {"source": "Service", "target": "Service", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestRiskScoring:
     """Test risk score calculation."""
-    
+
     def test_risk_score_present(self):
         """Test that risk calculation includes a score."""
         edges = [
             {"source": "A", "target": "B", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
+
         # Should have some risk assessment
-        assert isinstance(risk, dict)
-    
+        assert isinstance(risk, list)
+
     def test_risk_score_in_range(self):
         """Test that risk scores are in valid range."""
         edges = [
             {"source": "A", "target": "B", "type": "SYNC_API"},
             {"source": "A", "target": "C", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        if "risk_score" in risk:
-            assert 0 <= risk["risk_score"] <= 100
+
+        assert isinstance(risk, list)
+        for item in risk:
+            assert "riskScore" in item
+            assert 0 <= item["riskScore"] <= 100
 
 
 class TestDatabaseRisk:
     """Test risk factors from database usage."""
-    
+
     def test_db_bottleneck_risk(self):
         """Test detection of database bottleneck risk."""
         edges = [
@@ -149,11 +151,11 @@ class TestDatabaseRisk:
             {"source": "App3", "target": "SharedDB", "type": "DB"},
             {"source": "App4", "target": "SharedDB", "type": "DB"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_multiple_db_risk(self):
         """Test risk from accessing multiple databases."""
         edges = [
@@ -161,15 +163,15 @@ class TestDatabaseRisk:
             {"source": "Service", "target": "DB2", "type": "DB"},
             {"source": "Service", "target": "Cache", "type": "DB"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestFileAccessRisk:
     """Test risk factors from file access patterns."""
-    
+
     def test_file_io_risk(self):
         """Test detection of file I/O risk."""
         edges = [
@@ -177,36 +179,36 @@ class TestFileAccessRisk:
             {"source": "App", "target": "/data/file2.json", "type": "FILE"},
             {"source": "App", "target": "/config/settings.yaml", "type": "FILE"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestAsyncVsSyncRisk:
     """Test risk difference between async and sync patterns."""
-    
+
     def test_async_call_lower_risk(self):
         """Test that async calls have lower risk impact."""
         edges_async = [
             {"source": "Service", "target": "Queue", "type": "ASYNC_API"},
         ]
-        
+
         edges_sync = [
             {"source": "Service", "target": "Queue", "type": "SYNC_API"},
         ]
-        
+
         risk_async = calculate_risk(edges_async)
         risk_sync = calculate_risk(edges_sync)
-        
-        # Both should be valid dicts
-        assert isinstance(risk_async, dict)
-        assert isinstance(risk_sync, dict)
+
+        # Both should be valid lists
+        assert isinstance(risk_async, list)
+        assert isinstance(risk_sync, list)
 
 
 class TestComplexTopology:
     """Test risk calculation for complex topologies."""
-    
+
     def test_star_pattern_risk(self):
         """Test risk for star topology (hub-spoke)."""
         edges = [
@@ -215,16 +217,16 @@ class TestComplexTopology:
             {"source": "Hub", "target": "Spoke3", "type": "SYNC_API"},
             {"source": "Hub", "target": "Spoke4", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_mesh_pattern_risk(self):
         """Test risk for mesh topology."""
         services = ["ServiceA", "ServiceB", "ServiceC", "ServiceD"]
         edges = []
-        
+
         for src in services:
             for dst in services:
                 if src != dst:
@@ -233,15 +235,15 @@ class TestComplexTopology:
                         "target": dst,
                         "type": "SYNC_API"
                     })
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestCriticalPathIdentification:
     """Test identification of critical paths."""
-    
+
     def test_critical_service_detection(self):
         """Test detection of critical services."""
         edges = [
@@ -250,29 +252,29 @@ class TestCriticalPathIdentification:
             {"source": "API", "target": "OrderService", "type": "SYNC_API"},
             {"source": "OrderService", "target": "AuthService", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestEdgeCases:
     """Test edge cases."""
-    
+
     def test_empty_edges(self):
         """Test handling of empty edge list."""
         risk = calculate_risk([])
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_single_edge(self):
         """Test with single edge."""
         edges = [{"source": "A", "target": "B", "type": "SYNC_API"}]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
-    
+
+        assert isinstance(risk, list)
+
     def test_disconnected_components(self):
         """Test with disconnected components."""
         edges = [
@@ -280,15 +282,15 @@ class TestEdgeCases:
             {"source": "C", "target": "D", "type": "SYNC_API"},
             # A-B and C-D are disconnected
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestRiskRecommendations:
     """Test that risk assessment includes recommendations."""
-    
+
     def test_high_risk_has_recommendations(self):
         """Test that high risk scenarios include recommendations."""
         edges = [
@@ -300,25 +302,29 @@ class TestRiskRecommendations:
             {"source": "S1", "target": "S2", "type": "SYNC_API"},
             {"source": "S2", "target": "S3", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
-        assert isinstance(risk, dict)
+
+        assert isinstance(risk, list)
 
 
 class TestRiskMetrics:
     """Test supported risk metrics."""
-    
+
     def test_risk_includes_metrics(self):
         """Test that risk calculation returns structured metrics."""
         edges = [
             {"source": "Service", "target": "Dependency", "type": "SYNC_API"},
         ]
-        
+
         risk = calculate_risk(edges)
-        
+
         # Should have some structure
-        assert isinstance(risk, dict)
+        assert isinstance(risk, list)
+        for item in risk:
+            assert "system" in item
+            assert "fanOut" in item
+            assert "fanIn" in item
 
 
 if __name__ == "__main__":

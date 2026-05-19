@@ -43,14 +43,15 @@ DB_PATTERNS = {
 def detect_environment_db_config(content: str) -> List[Dict[str, Any]]:
     """Detect database configurations using environment variables."""
     results = []
-    
+
     # Pattern: os.getenv('DATABASE_URL') or similar
     env_db_pattern = r"os\.(?:getenv|environ\.get)\(['\"]([A-Z_]*DB[A-Z_]*|DATABASE[A-Z_]*)['\"](?:,\s*['\"]([^'\"]*)['\"])?\)"
-    
+
     for match in re.finditer(env_db_pattern, content):
         env_var = match.group(1)
         default_val = match.group(2) or ""
-        
+        line_no = content[:match.start()].count('\n') + 1
+
         # Try to infer database type from default value
         db_type = "Unknown"
         if "postgres" in default_val.lower() or "postgresql" in default_val.lower():
@@ -63,22 +64,23 @@ def detect_environment_db_config(content: str) -> List[Dict[str, Any]]:
             db_type = "SQLite"
         elif "redis" in default_val.lower():
             db_type = "Redis"
-        
+
         results.append({
             "type": "DB",
             "config_source": "environment_variable",
             "env_var": env_var,
             "db_type": db_type,
-            "confidence": 70
+            "confidence": 70,
+            "line": line_no
         })
-    
+
     return results
 
 
 def detect_dynamic_db_connections(tree: ast.AST) -> List[Dict[str, Any]]:
     """Detect indirect database connections through variables and function calls."""
     results = []
-    
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             # Pattern: engine = create_engine(db_url)
@@ -88,9 +90,10 @@ def detect_dynamic_db_connections(tree: ast.AST) -> List[Dict[str, Any]]:
                         "type": "DB",
                         "config_source": "dynamic_call",
                         "function": node.func.id,
-                        "confidence": 65
+                        "confidence": 65,
+                        "line": node.lineno
                     })
-            
+
             # Pattern: db = database.Database(url)
             elif isinstance(node.func, ast.Attribute):
                 method = node.func.attr
@@ -101,47 +104,52 @@ def detect_dynamic_db_connections(tree: ast.AST) -> List[Dict[str, Any]]:
                             "config_source": "dynamic_call",
                             "method": method,
                             "object": node.func.value.id,
-                            "confidence": 60
+                            "confidence": 60,
+                            "line": node.lineno
                         })
-    
+
     return results
 
 
 def detect_config_based_db(file_path: str) -> List[Dict[str, Any]]:
     """Detect database configurations from config files or config dictionaries."""
     results = []
-    
+
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         # Pattern: DATABASES = {...}
         config_pattern = r"DATABASES?\s*=\s*\{[\s\S]*?\}"
-        
+
         for match in re.finditer(config_pattern, content):
             config_block = match.group(0)
-            
+            line_no = content[:match.start()].count('\n') + 1
+
             # Check for database type hints in config
             if "ENGINE" in config_block or "driver" in config_block.lower():
                 results.append({
                     "type": "DB",
                     "config_source": "config_dict",
-                    "confidence": 75
+                    "confidence": 75,
+                    "line": line_no
                 })
                 break
-        
+
         # Pattern: DATABASE_URL = "..."
         url_pattern = r"DATABASE_URL\s*=\s*['\"]([^'\"]*)['\"]"
-        if re.search(url_pattern, content):
+        for match in re.finditer(url_pattern, content):
+            line_no = content[:match.start()].count('\n') + 1
             results.append({
                 "type": "DB",
                 "config_source": "config_url",
-                "confidence": 80
+                "confidence": 80,
+                "line": line_no
             })
-    
+
     except Exception:
         pass
-    
+
     return results
 
 
@@ -151,39 +159,39 @@ def extract_db_calls(file_path: str) -> List[Dict[str, Any]]:
     environment-based configurations, and dynamic connection patterns.
     """
     results = []
-    
+
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-        
+
         tree = None
         try:
             tree = ast.parse(content)
         except:
             tree = None
-        
+
         # Scan for direct regex patterns
         for i, line in enumerate(content.split('\n'), 1):
             stripped_line = line.strip()
-            
+
             # Skip comments
             if stripped_line.startswith('#'):
                 continue
-            
+
             matched = False
             for db_key, db_info in DB_PATTERNS.items():
                 for pattern in db_info["patterns"]:
                     if re.search(pattern, line):
                         base_score = 80
                         match_type = "Direct Match"
-                        
+
                         if "import " in line:
                             base_score = 70
                             match_type = "Import"
                         else:
                             base_score = 85
                             match_type = "Usage"
-                        
+
                         results.append({
                             "type": "DB",
                             "name": db_info["name"],
@@ -195,10 +203,10 @@ def extract_db_calls(file_path: str) -> List[Dict[str, Any]]:
                         })
                         matched = True
                         break
-                
+
                 if matched:
                     break
-        
+
         # Detect environment variable configurations
         if tree:
             env_configs = detect_environment_db_config(content)
@@ -209,10 +217,10 @@ def extract_db_calls(file_path: str) -> List[Dict[str, Any]]:
                     "detection": "Environment Config",
                     "env_var": config.get("env_var"),
                     "file": file_path,
-                    "line": 0,
+                    "line": config.get("line", 0),
                     "confidence": f"{config['confidence']}% (Environment Variable Detection)"
                 })
-            
+
             # Detect dynamic connections
             dynamic_conns = detect_dynamic_db_connections(tree)
             for conn in dynamic_conns:
@@ -222,10 +230,10 @@ def extract_db_calls(file_path: str) -> List[Dict[str, Any]]:
                     "detection": "Dynamic Connection",
                     "method": conn.get("method") or conn.get("function"),
                     "file": file_path,
-                    "line": 0,
+                    "line": conn.get("line", 0),
                     "confidence": f"{conn['confidence']}% (Dynamic Call Detection)"
                 })
-        
+
         # Detect config-based databases
         config_dbs = detect_config_based_db(file_path)
         for config in config_dbs:
@@ -234,12 +242,12 @@ def extract_db_calls(file_path: str) -> List[Dict[str, Any]]:
                 "name": config.get("db_type", "Database"),
                 "detection": "Config-Based",
                 "file": file_path,
-                "line": 0,
+                "line": config.get("line", 0),
                 "confidence": f"{config['confidence']}% (Config Detection)"
             })
-    
+
     except Exception as e:
         pass
-    
+
     return results
  

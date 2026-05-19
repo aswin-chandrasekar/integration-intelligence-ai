@@ -46,13 +46,25 @@ def sanitize_edge(edge: dict) -> dict:
 
 @api.route("/api/scan", methods=["POST"])
 def scan():
-    repo_path = request.json["repo_path"]
+    repo_path = request.json.get("repo_path") or request.json.get("repoPath")
+    if not repo_path:
+        return jsonify({"error": "repo_path or repoPath is required"}), 400
     # Support GitHub URLs by cloning
     if repo_path.startswith("http"):
         import subprocess
         repo_name = repo_path.split("/")[-1].replace(".git", "")
         clone_dir = os.path.abspath(f"data/clones/{repo_name}")
         is_empty = not os.path.exists(clone_dir) or not os.listdir(clone_dir)
+
+        if not is_empty:
+            print(f"Existing clone found at {clone_dir}. Pulling latest updates...")
+            try:
+                subprocess.run(["git", "pull"], cwd=clone_dir, check=True, capture_output=True)
+                print("Git pull successful.")
+            except Exception as e:
+                print(f"Git pull failed ({e}). Performing clean re-clone...")
+                is_empty = True
+
         if is_empty:
             if os.path.exists(clone_dir):
                 import shutil
@@ -64,8 +76,6 @@ def scan():
             except Exception as e:
                 print(f"Clone failed: {e}")
                 return jsonify({"status": "failed", "error": f"Git clone failed: {str(e)}"}), 500
-        else:
-            print(f"Using existing clone at {clone_dir}")
         repo_path = clone_dir
     edges = []
     files = get_python_files(repo_path)
@@ -126,12 +136,12 @@ def edges():
 def system_impact(system_name):
     depth = int(request.args.get("depth", 1))
     direction = request.args.get("direction", "both")
-    
+
     result = get_impact(system_name, depth, direction)
-    
+
     # Map backend edge keys ("src_tgt") to UI ReactFlow IDs ("e-src-tgt")
     formatted_edges = [f"e-{key.replace('_', '-')}" for key in result.get("edge_keys", [])]
-    
+
     return jsonify({
         "nodes": result.get("nodes", []),
         "edges": formatted_edges
@@ -284,17 +294,17 @@ Overall architecture operational risk is assessed as {overall_risk} based on syn
 def get_insights():
     BASE_DIR = os.path.dirname(os.path.dirname(__file__))
     file_path = os.path.join(BASE_DIR, "data", "edges.json")
-    
+
     edges = []
     if os.path.exists(file_path):
         with open(file_path) as f:
             edges = [sanitize_edge(edge) for edge in json.load(f)]
 
     total_integrations = len(edges)
-    
+
     total_confidence = 0
     valid_confidence_count = 0
-    
+
     import re
     for edge in edges:
         confidence_str = edge.get("confidence", "")
@@ -303,22 +313,22 @@ def get_insights():
             conf_val = int(match.group(1))
             total_confidence += conf_val
             valid_confidence_count += 1
-            
+
     avg_confidence = round(total_confidence / valid_confidence_count) if valid_confidence_count > 0 else 0
-    
+
     risks_analysis = calculate_risk(edges)
     recommendations = generate_recommendations(edges)
-    
+
     high_critical_systems = [r for r in risks_analysis if r["riskLevel"] in ["HIGH", "CRITICAL"]]
     active_risks_count = len(high_critical_systems)
-    
+
     if active_risks_count > 2:
         badge = "Critical"
     elif active_risks_count > 0:
         badge = "High"
     else:
         badge = "Low"
-        
+
     arch_score = 100
     for r in risks_analysis:
         if r["riskLevel"] == "CRITICAL":
@@ -327,13 +337,13 @@ def get_insights():
             arch_score -= 10
         elif r["riskLevel"] == "MEDIUM":
             arch_score -= 5
-    
+
     arch_score = max(0, min(100, arch_score))
-    
+
     patterns = []
     has_event_driven = any(e.get("type") in ["PUB_SUB", "ASYNC_API"] for e in edges)
     sync_count = len([e for e in edges if e.get("type") == "SYNC_API"])
-    
+
     if has_event_driven or sync_count < total_integrations * 0.3:
         patterns.append({
             "title": "Event-Driven Synchronization",
@@ -342,7 +352,7 @@ def get_insights():
             "status": "STABLE" if has_event_driven else "OPTIMAL",
             "icon": "RefreshCw"
         })
-        
+
     db_count = len([e for e in edges if e.get("type") == "DB"])
     if db_count > 0:
         patterns.append({
@@ -353,7 +363,7 @@ def get_insights():
             "isRisk": True,
             "icon": "Database"
         })
-        
+
     formatted_risks = []
     for r in high_critical_systems:
         formatted_risks.append({
@@ -363,7 +373,7 @@ def get_insights():
             "evidence": f"Fan-Out: {r['fanOut']}, Sync Depth: {r['syncDepth']}",
             "action": "Investigate"
         })
-        
+
     if db_count > 0:
         formatted_risks.append({
             "type": "Direct Database Access",
@@ -382,7 +392,7 @@ def get_insights():
             "evidence": "File system dependencies",
             "action": "Migrate to API"
         })
-        
+
     formatted_recs = []
     for i, rec in enumerate(recommendations[:3]):
         formatted_recs.append({
