@@ -9,6 +9,7 @@ from backend.app.models.edge import make_edge
 from backend.classifier.impact import get_impact
 from backend.classifier.recommendation_engine import generate_recommendations
 from backend.classifier.risk_engine import calculate_risk
+from backend.llm.gemini_client import explain_edge, generate_architect_summary, answer_architecture_query, redact_secrets, generate_llm_recommendations
 import json
 import os
 from backend.impact.impact_analysis import get_downstream, get_upstream
@@ -121,6 +122,23 @@ def scan():
                 f.get("line", 0),
                 f.get("confidence")
             ))
+    # Deduplicate edges by (source, target, type, file, line) keeping the highest confidence
+    deduped_edges = {}
+    for edge in edges:
+        key = (edge["source"], edge["target"], edge["type"], edge["file"], edge["line"])
+        if key in deduped_edges:
+            try:
+                # Extract numeric confidence to keep the higher one
+                curr_conf = int(edge.get("confidence", "0").split("%")[0])
+                prev_conf = int(deduped_edges[key].get("confidence", "0").split("%")[0])
+                if curr_conf > prev_conf:
+                    deduped_edges[key] = edge
+            except Exception:
+                pass
+        else:
+            deduped_edges[key] = edge
+    edges = list(deduped_edges.values())
+
     with open("backend/data/edges.json", "w") as f:
         json.dump(edges, f, indent=2)
     return jsonify({"status": "completed", "edges": len(edges)})
@@ -169,7 +187,11 @@ def recommendations():
         with open(file_path) as f:
             edges = json.load(f)
 
-    results = generate_recommendations(edges)
+    llm_recs = generate_llm_recommendations(json.dumps(edges))
+    if llm_recs:
+        results = llm_recs
+    else:
+        results = generate_recommendations(edges)
 
     return jsonify(results)
 
@@ -262,22 +284,19 @@ def architect_summary():
     else:
         overall_risk = "LOW"
 
-    # -----------------------------
-    # Summary Text
-    # -----------------------------
-    summary = f"""
-This repository contains {len(edges)} detected integrations across {len(systems)} systems.
+    metrics = {
+        "len(edges)": len(edges),
+        "len(systems)": len(systems),
+        "sync_edges": sync_edges,
+        "most_coupled": most_coupled,
+        "max_connections": max_connections,
+        "db_edges": db_edges,
+        "file_edges": file_edges,
+        "overall_risk": overall_risk
+    }
+    llm_result = generate_architect_summary(json.dumps(metrics))
+    summary = llm_result.get("summary", "LLM integration disabled or unavailable.")
 
-The architecture is primarily driven by synchronous API communication patterns, with {sync_edges} synchronous integrations detected.
-
-The most connected system is '{most_coupled}', which may represent a central orchestration or coupling hotspot with {max_connections} total upstream/downstream dependencies.
-
-Database integrations detected: {db_edges}
-File-based integrations detected: {file_edges}
-
-Overall architecture operational risk is assessed as {overall_risk} based on synchronous dependency concentration and integration centrality patterns.
-
-"""
 
     return jsonify({
         "summary": summary.strip(),
@@ -393,13 +412,30 @@ def get_insights():
             "action": "Migrate to API"
         })
 
+    metrics_for_llm = {
+        "total_integrations": total_integrations,
+        "sync_apis": sync_count,
+        "databases": db_count,
+    }
+    llm_result = generate_architect_summary(json.dumps(metrics_for_llm))
+    action_items = llm_result.get("action_items", [])
+
     formatted_recs = []
-    for i, rec in enumerate(recommendations[:3]):
-        formatted_recs.append({
-            "icon": "AlertCircle" if rec["severity"] in ["HIGH", "CRITICAL"] else "Zap",
-            "title": rec["title"],
-            "desc": rec["why"] + " " + rec["recommendation"]
-        })
+    if action_items:
+        for item in action_items[:3]:
+            formatted_recs.append({
+                "icon": "Zap",
+                "title": "AI Recommendation",
+                "desc": item
+            })
+    else:
+        # Fallback to deterministic rules if LLM fails
+        for i, rec in enumerate(recommendations[:3]):
+            formatted_recs.append({
+                "icon": "AlertCircle" if rec["severity"] in ["HIGH", "CRITICAL"] else "Zap",
+                "title": rec["title"],
+                "desc": rec["why"] + " " + rec["recommendation"]
+            })
 
     return jsonify({
         "metrics": {
@@ -481,3 +517,53 @@ def export_mermaid():
     return jsonify({
         "diagram": diagram
     })
+
+@api.route("/api/llm/explain", methods=["POST"])
+def api_llm_explain():
+    data = request.json
+    source = data.get("source")
+    target = data.get("target")
+    edge_type = data.get("type")
+    evidence = data.get("evidence", "")
+
+    redacted_evidence = redact_secrets(evidence)
+    explanation = explain_edge(source, target, edge_type, redacted_evidence)
+    return jsonify({"explanation": explanation})
+
+@api.route("/api/llm/summary", methods=["GET"])
+def api_llm_summary():
+    # Gather basic metrics to pass to LLM
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    metrics = {
+        "total_integrations": len(edges),
+        "sync_apis": len([e for e in edges if e.get("type") == "SYNC_API"]),
+        "databases": len([e for e in edges if e.get("type") == "DB"]),
+    }
+
+    summary_data = generate_architect_summary(json.dumps(metrics))
+    return jsonify(summary_data)
+
+@api.route("/api/llm/query", methods=["POST"])
+def api_llm_query():
+    data = request.json
+    query = data.get("query")
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    sanitized_graph = redact_secrets(json.dumps([{"s": e.get("source"), "t": e.get("target"), "type": e.get("type")} for e in edges]))
+
+    answer = answer_architecture_query(query, sanitized_graph)
+    return jsonify({"answer": answer})

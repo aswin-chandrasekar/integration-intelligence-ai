@@ -62,3 +62,26 @@ export const exportMermaid = async (system?: string) => {
 
   return response.json();
 };
+
+export const explainEdge = async (source: string, target: string, type: string, evidence: string) => {
+  const response = await fetch('/api/llm/explain', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, target, type, evidence }),
+  });
+  return response.json();
+};
+
+export const getLLMSummary = async () => {
+  const response = await fetch('/api/llm/summary');
+  return response.json();
+};
+
+export const queryArchitecture = async (query: string) => {
+  const response = await fetch('/api/llm/query', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query }),
+  });
+  return response.json();
+};

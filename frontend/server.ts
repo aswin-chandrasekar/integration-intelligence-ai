@@ -148,6 +148,47 @@ async function startServer() {
     }
   });
 
+  app.post("/api/llm/explain", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/llm/explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching LLM explanation from backend:", e);
+      res.status(500).json({ error: "Could not fetch explanation from backend" });
+    }
+  });
+
+  app.get("/api/llm/summary", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/llm/summary");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching LLM summary from backend:", e);
+      res.status(500).json({ error: "Could not fetch summary from backend" });
+    }
+  });
+
+  app.post("/api/llm/query", async (req, res) => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/api/llm/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(req.body)
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      res.json(await response.json());
+    } catch (e) {
+      console.error("Error fetching LLM query from backend:", e);
+      res.status(500).json({ error: "Could not fetch query from backend" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

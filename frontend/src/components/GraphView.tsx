@@ -9,8 +9,8 @@ import ReactFlow, {
   Panel,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { Integration, getRiskAnalysis } from "../services/api";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { Integration, getRiskAnalysis, explainEdge } from "../services/api";
+import { ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 
 interface GraphViewProps {
   data?: Integration[];
@@ -42,6 +42,24 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
   const [direction, setDirection] = useState<string>("both"); // "upstream", "downstream", "both"
   const [riskData, setRiskData] = useState<any[]>([]);
   const [riskPanelCollapsed, setRiskPanelCollapsed] = useState<boolean>(false);
+
+  const [explanationMap, setExplanationMap] = useState<Record<string, string>>({});
+  const [loadingExplanation, setLoadingExplanation] = useState<string | null>(null);
+
+  const handleExplainEdge = async (int: Integration, index: number) => {
+    const key = `${selectedEdge?.id}-${index}`;
+    if (explanationMap[key]) return;
+    
+    setLoadingExplanation(key);
+    try {
+      const response = await explainEdge(int.source, int.target, int.type, int.evidence);
+      setExplanationMap(prev => ({ ...prev, [key]: response.explanation }));
+    } catch (e) {
+      setExplanationMap(prev => ({ ...prev, [key]: "Explanation currently unavailable (Network error)." }));
+    } finally {
+      setLoadingExplanation(null);
+    }
+  };
 
   // Keep track of positions so nodes don't jump on every click
   const nodePositions = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -623,6 +641,34 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
                     <p style={{ color: "var(--app-text-muted)" }}>
                       <b>Line:</b> {int.line}
                     </p>
+                    
+                    {explanationMap[`${selectedEdge?.id}-${i}`] ? (
+                      <div style={{ marginTop: "8px", padding: "8px", background: "var(--app-surface-hover)", borderRadius: "4px", color: "var(--app-text)", fontStyle: "italic", borderLeft: "2px solid #8b5cf6" }}>
+                        <Sparkles size={12} style={{ display: "inline", marginRight: "4px", color: "#8b5cf6" }}/> 
+                        {explanationMap[`${selectedEdge?.id}-${i}`]}
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleExplainEdge(int, i)}
+                        disabled={loadingExplanation === `${selectedEdge?.id}-${i}`}
+                        style={{ 
+                          marginTop: "8px", 
+                          padding: "4px 8px", 
+                          background: "var(--app-border)", 
+                          color: "var(--app-text)", 
+                          border: "none", 
+                          borderRadius: "4px", 
+                          cursor: loadingExplanation === `${selectedEdge?.id}-${i}` ? "wait" : "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          fontSize: "11px"
+                        }}
+                      >
+                        <Sparkles size={12} />
+                        {loadingExplanation === `${selectedEdge?.id}-${i}` ? "Analyzing..." : "Explain with AI"}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

@@ -1,7 +1,16 @@
-from backend.db.db import SessionLocal
-from backend.db.models import Edge
+import json
+with open("backend/data/edges.json") as f:
+    edges = json.load(f)
 
-session = SessionLocal()
+seen = set()
+duplicates = []
+for edge in edges:
+    key = (edge["source"], edge["target"], edge["type"], edge["file"], edge["line"])
+    if key in seen:
+        duplicates.append(edge)
+    else:
+        seen.add(key)
 
-for e in session.query(Edge).all():
-    print(e.source_id, "->", e.target_id, "|", e.type)
+print("Duplicates count:", len(duplicates))
+if duplicates:
+    print("First duplicate:", duplicates[0])
