@@ -19,6 +19,7 @@ import {
 import { motion } from 'motion/react';
 import RecommendationsPanel from './RecommendationsPanel';
 import ArchitectSummaryPanel from './ArchitectSummaryPanel';
+import { queryArchitecture } from '../services/api';
 
 interface AIInsightsProps {
   onNavigateToDashboard?: () => void;
@@ -148,6 +149,35 @@ const defaultData: InsightsData = {
 
 const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNavigateToSection, integrations = [] }) => {
   const [data, setData] = useState<InsightsData>(defaultData);
+  const [qaQuestion, setQaQuestion] = useState('');
+  const [qaAnswer, setQaAnswer] = useState<string | null>(null);
+  const [qaLoading, setQaLoading] = useState(false);
+  const [qaError, setQaError] = useState<string | null>(null);
+
+  const askArchitectureQuestion = async () => {
+    const trimmed = qaQuestion.trim();
+    if (!trimmed) {
+      setQaError('Ask a question about architecture first.');
+      return;
+    }
+
+    setQaError(null);
+    setQaLoading(true);
+    setQaAnswer(null);
+
+    try {
+      const result = await queryArchitecture(trimmed);
+      const answerText = typeof result === 'string'
+        ? result
+        : result?.answer ?? JSON.stringify(result, null, 2);
+      setQaAnswer(answerText || 'No answer returned.');
+    } catch (error) {
+      console.error('Architecture query failed:', error);
+      setQaError('Failed to fetch answer. Try again later.');
+    } finally {
+      setQaLoading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -266,7 +296,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-app-text">Architectural Patterns</h2>
             </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.patterns.map((pattern, index) => (
               <PatternCard 
@@ -297,7 +327,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <ConfidenceBar label="Data Mapping" value={data.confidenceIndex.dataMapping} />
               <ConfidenceBar label="Security Logic" value={data.confidenceIndex.securityLogic} />
@@ -315,7 +345,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
             <button onClick={handleExportReport} className="px-4 py-2 border border-app-border rounded-lg text-sm font-bold text-app-text hover:bg-app-surface-hover transition-colors cursor-pointer">Export Report</button>
           </div>
         </div>
-        
+
         <div className="bg-app-surface border border-app-border rounded-xl overflow-hidden shadow-sm transition-colors">
           <table className="w-full text-left border-collapse">
             <thead className="bg-app-bg border-b border-app-border">
@@ -351,6 +381,39 @@ const AIInsights: React.FC<AIInsightsProps> = ({ onNavigateToDashboard, onNaviga
       {/* Architecture Summary */}
       <section className="space-y-6">
         <ArchitectSummaryPanel />
+      </section>
+
+      {/* Architecture Q&A */}
+      <section className="space-y-6">
+        <div className="bg-app-surface border border-app-border rounded-xl p-8 shadow-sm transition-colors">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-app-text">Architecture Q&A</h2>
+              <p className="text-app-text-muted text-sm mt-1">Ask a question about the current architecture.</p>
+            </div>
+          </div>
+
+          <textarea
+            className="w-full min-h-[140px] mt-6 p-4 border border-app-border rounded-xl bg-app-bg text-app-text focus:outline-none focus:ring-2 focus:ring-app-brand"
+            value={qaQuestion}
+            onChange={(e) => setQaQuestion(e.target.value)}
+          />
+          {qaError && <p className="text-rose-500 text-sm mt-2">{qaError}</p>}
+
+          <button
+            onClick={askArchitectureQuestion}
+            disabled={qaLoading}
+            className="mt-4 px-5 py-3 rounded-xl bg-app-brand text-white font-bold text-sm hover:bg-app-brand-hover transition-all disabled:opacity-50"
+          >
+            {qaLoading ? 'Asking…' : 'Ask Architecture Q&A'}
+          </button>
+
+          {qaAnswer !== null && (
+            <div className="mt-6 bg-app-bg border border-app-border rounded-xl p-4 text-sm text-app-text leading-relaxed whitespace-pre-line">
+              {qaAnswer}
+            </div>
+          )}
+        </div>
       </section>
     </div>
   );

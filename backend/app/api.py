@@ -174,27 +174,6 @@ def node_impact():
 
     return jsonify(result)
 
-@api.route("/api/recommendations", methods=["GET"])
-def recommendations():
-
-    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-    file_path = os.path.join(BASE_DIR, "data", "edges.json")
-
-    edges = []
-
-    if os.path.exists(file_path):
-        with open(file_path) as f:
-            edges = json.load(f)
-
-    llm_recs = generate_llm_recommendations(json.dumps(edges))
-    if llm_recs:
-        results = llm_recs
-    else:
-        results = generate_recommendations(edges)
-
-    return jsonify(results)
-
 @api.route("/api/risk-analysis", methods=["GET"])
 def risk_analysis():
 
@@ -308,6 +287,27 @@ def architect_summary():
         "mostCoupledSystem": most_coupled,
         "overallRisk": overall_risk
     })
+
+@api.route("/api/recommendations", methods=["GET"])
+def recommendations():
+
+    BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+
+    file_path = os.path.join(BASE_DIR, "data", "edges.json")
+
+    edges = []
+
+    if os.path.exists(file_path):
+        with open(file_path) as f:
+            edges = json.load(f)
+
+    llm_recs = generate_llm_recommendations(json.dumps(edges))
+    if llm_recs:
+        results = llm_recs
+    else:
+        results = generate_recommendations(edges)
+
+    return jsonify(results)
 
 @api.route("/api/insights", methods=["GET"])
 def get_insights():

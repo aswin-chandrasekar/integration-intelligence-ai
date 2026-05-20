@@ -33,9 +33,6 @@ const HelpCentre: React.FC = () => {
               PLACEHOLDER: ADD YOUR "GETTING STARTED" CONTENT BELOW HERE
               ==========================================================
             */}
-            <p>
-              Welcome to the User Manual! This is where you can introduce your application to new users.
-            </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <strong className="text-app-text">Step 1:</strong> Enter your repository URL or local path in the Repository Scan panel.
