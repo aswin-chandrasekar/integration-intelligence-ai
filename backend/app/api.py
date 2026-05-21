@@ -5,6 +5,7 @@ from backend.app.scanner.flask_parser import extract_flask_routes
 from backend.app.scanner.outbound_http import extract_http_calls
 from backend.app.scanner.db_parser import extract_db_calls
 from backend.app.scanner.file_parser import extract_file_ops
+from backend.app.scanner.pub_sub_parser import extract_pub_sub_systems
 from backend.app.models.edge import make_edge
 from backend.classifier.impact import get_impact
 from backend.classifier.recommendation_engine import generate_recommendations
@@ -31,6 +32,12 @@ def normalize_file_target_name(file_edge: dict) -> str:
     if "json" in name or "json" in path:
         return "JSON Data"
     return "Native File IO"
+
+
+def normalize_pubsub_target_name(pubsub_edge: dict) -> str:
+    """Normalize pub/sub system names to standardized targets."""
+    system = pubsub_edge.get("system", "Pub/Sub")
+    return system
 
 
 def sanitize_edge(edge: dict) -> dict:
@@ -122,6 +129,16 @@ def scan():
                 f.get("line", 0),
                 f.get("confidence")
             ))
+        # 5. Pub/Sub Systems
+        for ps in extract_pub_sub_systems(file):
+            edges.append(make_edge(
+                "Flask App",
+                normalize_pubsub_target_name(ps),
+                "PUB_SUB",
+                file,
+                ps.get("line", 0),
+                f"{ps.get('confidence', 70)}% ({ps.get('config_source', 'Detection')})"
+            ))
     # Deduplicate edges by (source, target, type, file, line) keeping the highest confidence
     deduped_edges = {}
     for edge in edges:
@@ -204,6 +221,9 @@ def architect_summary():
         with open(file_path) as f:
             edges = [sanitize_edge(edge) for edge in json.load(f)]
 
+    # Exclude pub/sub edges from architecture risk ranking and system metrics.
+    visible_edges = [edge for edge in edges if edge.get("type") != "PUB_SUB"]
+
     # -----------------------------
     # System Metrics
     # -----------------------------
@@ -215,8 +235,9 @@ def architect_summary():
     sync_edges = 0
     db_edges = 0
     file_edges = 0
+    pubsub_edges = 0
 
-    for edge in edges:
+    for edge in visible_edges:
 
         source = edge.get("source")
         target = edge.get("target")
@@ -236,6 +257,8 @@ def architect_summary():
 
         if edge_type == "FILE":
             file_edges += 1
+        
+    pubsub_edges = sum(1 for edge in edges if edge.get("type") == "PUB_SUB")
 
     # -----------------------------
     # Most Coupled System
@@ -267,6 +290,7 @@ def architect_summary():
         "len(edges)": len(edges),
         "len(systems)": len(systems),
         "sync_edges": sync_edges,
+        "pubsub_edges": pubsub_edges,
         "most_coupled": most_coupled,
         "max_connections": max_connections,
         "db_edges": db_edges,
@@ -282,6 +306,7 @@ def architect_summary():
         "systems": len(systems),
         "integrations": len(edges),
         "syncIntegrations": sync_edges,
+        "pubsubIntegrations": pubsub_edges,
         "dbIntegrations": db_edges,
         "fileIntegrations": file_edges,
         "mostCoupledSystem": most_coupled,

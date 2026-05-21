@@ -11,6 +11,7 @@ def generate_recommendations(edges):
     sync_edges = []
     db_edges = []
     file_edges = []
+    pubsub_edges = []
 
     for edge in edges:
         source = edge.get("source")
@@ -26,6 +27,9 @@ def generate_recommendations(edges):
 
         elif edge_type == "FILE":
             file_edges.append(edge)
+        
+        elif edge_type == "PUB_SUB":
+            pubsub_edges.append(edge)
 
     # -----------------------------
     # 1. High Fan-Out Systems
@@ -103,6 +107,27 @@ def generate_recommendations(edges):
                 "Introduce webhook/event triggers",
                 "Replace polling with push model",
                 "Reduce manual reconciliation"
+            ]
+        })
+
+    # -----------------------------
+    # 5. Pub/Sub Implementation
+    # -----------------------------
+    if len(pubsub_edges) > 0:
+        pubsub_systems = list(set([edge.get("target") for edge in pubsub_edges]))
+        systems_str = ", ".join(pubsub_systems)
+        recommendations.append({
+            "system": "Architecture",
+            "title": "Pub/Sub Async Messaging Detected",
+            "severity": "LOW",
+            "why": f"Asynchronous pub/sub patterns detected ({systems_str}, {len(pubsub_edges)} connection(s)). This is a modern best practice.",
+            "recommendation": "Ensure robust error handling, dead-letter queues, and distributed tracing for pub/sub systems.",
+            "steps": [
+                "Implement dead-letter queue handling",
+                "Add distributed tracing (OpenTelemetry/Jaeger)",
+                "Configure consumer group/offset management",
+                "Set up monitoring and alerting for message lag",
+                "Document message schema contracts"
             ]
         })
 

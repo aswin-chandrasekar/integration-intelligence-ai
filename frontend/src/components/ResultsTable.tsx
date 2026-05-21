@@ -220,6 +220,8 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
                           ? 'bg-purple-500'
                           : item.color === 'orange'
                           ? 'bg-orange-500'
+                          : item.color === 'green'
+                          ? 'bg-green-500'
                           : 'bg-cyan-500'
                       } shadow-sm`}
                     ></span>
@@ -236,6 +238,8 @@ const ResultsTable: React.FC<Props> = ({ data }) => {
                         ? 'bg-purple-500/10 text-purple-600'
                         : item.color === 'orange'
                         ? 'bg-orange-500/10 text-orange-600'
+                        : item.color === 'green'
+                        ? 'bg-green-500/10 text-green-600'
                         : 'bg-cyan-500/10 text-cyan-600'
                     }`}
                   >

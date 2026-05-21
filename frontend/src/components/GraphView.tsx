@@ -351,17 +351,30 @@ const GraphView = ({ data = [], onSelectedSystemChange }: GraphViewProps) => {
   );
 
   useEffect(() => {
+    if (!data || data.length === 0) {
+      setRiskData([]);
+      return;
+    }
 
     getRiskAnalysis()
-      .then((data) => {
-        console.log("Risk Analysis:", data);
-        setRiskData(data);
+      .then((riskResults) => {
+        const graphNames = new Set<string>(
+          data
+            .flatMap((item: Integration) => [item.source, item.target])
+            .map((name) => name.toLowerCase())
+        );
+
+        const filtered = riskResults.filter(
+          (item: any) => graphNames.has(item.system.toLowerCase())
+        );
+        console.log("Risk Analysis:", filtered);
+        setRiskData(filtered);
       })
       .catch((err) => {
         console.error("Risk analysis failed:", err);
       });
 
-  }, []);
+  }, [data]);
 
 
   useEffect(() => {

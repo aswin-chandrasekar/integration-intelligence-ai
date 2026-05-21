@@ -1,6 +1,14 @@
 import uuid
 
 def make_edge(source, target, integration_type, file, line, confidence="95% (Automated Match)"):
+    # Determine edge color based on type
+    if integration_type == "SYNC_API":
+        color = "blue"
+    elif integration_type == "PUB_SUB":
+        color = "green"
+    else:
+        color = "orange"
+    
     return {
         "id": str(uuid.uuid4()),
         "source": source,
@@ -11,5 +19,5 @@ def make_edge(source, target, integration_type, file, line, confidence="95% (Aut
         "line": line,
         "confidence": confidence,
         "note": "Detected via static code analysis",
-        "color": "blue" if integration_type == "SYNC_API" else "orange"
+        "color": color
     }

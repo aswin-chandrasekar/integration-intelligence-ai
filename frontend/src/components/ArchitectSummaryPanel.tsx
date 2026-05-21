@@ -5,6 +5,7 @@ interface SummaryData {
   systems: number;
   integrations: number;
   syncIntegrations: number;
+  pubsubIntegrations: number;
   dbIntegrations: number;
   fileIntegrations: number;
   mostCoupledSystem: string;
@@ -73,7 +74,7 @@ const ArchitectSummaryPanel = () => {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
         <div className="bg-app-bg border border-app-border rounded-xl p-4 transition-colors">
           <p className="text-app-text-muted text-xs uppercase font-black tracking-wider">
             Systems
@@ -98,6 +99,15 @@ const ArchitectSummaryPanel = () => {
           </p>
           <p className="text-app-text text-2xl font-extrabold mt-2">
             {data.syncIntegrations}
+          </p>
+        </div>
+
+        <div className="bg-app-bg border border-app-border rounded-xl p-4 transition-colors">
+          <p className="text-app-text-muted text-xs uppercase font-black tracking-wider">
+            Pub/Sub
+          </p>
+          <p className="text-app-text text-2xl font-extrabold mt-2">
+            {data.pubsubIntegrations}
           </p>
         </div>
 
@@ -141,4 +151,4 @@ const ArchitectSummaryPanel = () => {
   );
 };
 
-export default ArchitectSummaryPanel;
+export default ArchitectSummaryPanel;
