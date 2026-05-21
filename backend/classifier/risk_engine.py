@@ -32,8 +32,6 @@ def calculate_risk(edges):
         source = edge.get("source")
         target = normalize_target_name(edge.get("target"), edge.get("type"))
         edge_type = edge.get("type")
-        if edge_type == "PUB_SUB":
-            continue
         edge_key = (source, target, edge_type)
 
         if edge_key in seen_edges:

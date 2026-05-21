@@ -221,12 +221,8 @@ def architect_summary():
         with open(file_path) as f:
             edges = [sanitize_edge(edge) for edge in json.load(f)]
 
-    # Exclude pub/sub edges from architecture risk ranking and system metrics.
-    visible_edges = [edge for edge in edges if edge.get("type") != "PUB_SUB"]
-
-    # -----------------------------
-    # System Metrics
-    # -----------------------------
+    # Include pub/sub edges in architecture risk ranking and system metrics.
+    # Pub/sub integrations contribute to coupling and should be visible in risk results.
     systems = set()
 
     fan_out = defaultdict(int)
@@ -237,7 +233,7 @@ def architect_summary():
     file_edges = 0
     pubsub_edges = 0
 
-    for edge in visible_edges:
+    for edge in edges:
 
         source = edge.get("source")
         target = edge.get("target")
@@ -257,8 +253,9 @@ def architect_summary():
 
         if edge_type == "FILE":
             file_edges += 1
-        
-    pubsub_edges = sum(1 for edge in edges if edge.get("type") == "PUB_SUB")
+
+        if edge_type == "PUB_SUB":
+            pubsub_edges += 1
 
     # -----------------------------
     # Most Coupled System
